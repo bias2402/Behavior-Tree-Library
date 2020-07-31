@@ -2,6 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
+public enum NodeTypes { Leaf, PrioritySelector }
 public class TreeMaker : EditorWindow {
 	private List<Node> treeNodes = new List<Node>();
 	private List<NodeConnection> nodeConnections = new List<NodeConnection>();
@@ -16,6 +17,11 @@ public class TreeMaker : EditorWindow {
 	private Vector2 draggingAllCurrent = Vector2.zero;
 	private Node root = null;
 
+	[Header("Node informations")]
+	private string nodeName;
+	private NodeTypes nodeTypes;
+
+
 	[MenuItem("Window/Tree Maker")]
 	public static void Launch() {
 		GetWindow(typeof(TreeMaker)).Show();
@@ -26,12 +32,11 @@ public class TreeMaker : EditorWindow {
 		if (GUILayout.Button("Add Node")) {                                                                     //If the button is clicked, add a new object to the window and the list
 			treeNodes.Add(new Node("Node " + (treeNodes.Count), rectSize, new Vector2(200, 50), this));
 		}
+		GUILayout.Label("Node name:");
+		nodeName = GUILayout.TextField(nodeName, 25, "textfield");
+		GUILayout.Label("Node type:");
+		nodeTypes = (NodeTypes)EditorGUILayout.EnumPopup(nodeTypes);
 		GUILayout.EndArea();
-	}
-	public void Update() {
-		if (doRepaint) {
-			Repaint();   
-		}
 	}
 	public void OnGUI() {
 		if (root == null) {
@@ -41,35 +46,42 @@ public class TreeMaker : EditorWindow {
 		wantsMouseMove = true;
 		NodeEditPanel();																						//Draw the edit panel
 		Node toFront, dropDead;
-		bool previousState, flipRepaint;
+		bool previousState;
 		Color color;
 
 		toFront = dropDead = null;
-		doRepaint = flipRepaint = false;
 
-        //Drag and drop, repainting, and stacking for all nodes
+        //Drag and drop, recoloring, selecting, and stacking for all nodes
         #region
-        foreach (Node data in treeNodes) {                                                          //Go through all the spawned objects
-			previousState = data.Dragging;																		//Save bool value about data being dragged last time it was checked
+        foreach (Node n in treeNodes) {                                                          //Go through all the spawned objects
+			previousState = n.Dragging;																		//Save bool value about data being dragged last time it was checked
 
-			color = GUI.color;																					//Save the default color
-			if (previousState) {																				//If data was dragged
-				GUI.color = dropTargetRect.Contains(Event.current.mousePosition) ? Color.red : Color.grey;          //Check if the mouse in inside the object
+			color = GUI.color;																				//Save the default color
+			if (n.isSelected) {																				
+				GUI.color = Color.yellow;																		//Make n yellow
+			} else {
+				GUI.color = color;																				//Make n standard GUI color
 			}
-			data.OnGUI();																						//Call OnGUI on the object
+			n.OnGUI();																						//Call OnGUI on the object
 			GUI.color = color;																					//Change the color of the GUI back to the original
 
-			if (data.Dragging) {																				//If data is being dragged
-				doRepaint = true;																					//Repaint set to true
-
-				if (treeNodes.IndexOf(data) != treeNodes.Count - 1) {											//If the object isn't the last in the list
-					toFront = data;																						//Set reference for toFront to equal data
+			if (n.Dragging) {																				//If data is being dragged
+				if (!n.isRoot) {
+					n.isSelected = true;
+					n.ParseNodeInfoInEditPanel();
+					foreach (Node otherNodes in treeNodes) {                                                        //Go through all nodes	
+						if (otherNodes != n) {
+							otherNodes.isSelected = false;
+							GUI.color = color;                                                                              //Set color of all but this node to standard GUI color
+						}
+					}
+				}
+				if (treeNodes.IndexOf(n) != treeNodes.Count - 1) {											//If the object isn't the last in the list
+					toFront = n;																						//Set reference for toFront to equal data
 				}
 			} else if (previousState) {																			//If data was previously dragged
-				flipRepaint = true;																					//Flip the repaint equal true
-
 				if (dropTargetRect.Contains(Event.current.mousePosition)) {											//If the mouse is on the object
-					dropDead = data;																					//Set dropDead reference to equal data
+					dropDead = n;																					//Set dropDead reference to equal data
 				}
 			}
 		}
@@ -80,15 +92,7 @@ public class TreeMaker : EditorWindow {
 		}
 
 		if (dropDead != null) {																				// Destroy an object if needed
-			treeNodes.Remove(dropDead);
-		}
-
-		if (flipRepaint) {																					// If some object just stopped being dragged, we should repaint for the state change
-			Repaint();
-		}
-
-		if (currentConnection != null) {
-			Repaint();
+			treeNodes.Remove(dropDead); 
 		}
 		#endregion
 
@@ -143,12 +147,12 @@ public class TreeMaker : EditorWindow {
 		NodeEditPanel();                                                                                    //Redraw to put panel on-top of all other elements
 	}
     public void Zoom(int direction) {																	
-		if (direction == 1) {																				//If it is less than or equal to 80
+		if (direction == 1) {																				//If scroll up
 			rectSize[0] = 80;																					//Set to 80
 			rectSize[1] = 30;                                                                                   //Set to 30
-		} else if (direction == -1) {																		//If it is greater than or equal to 150
-			rectSize[0] = 130;                                                                                  //Set to 150
-			rectSize[1] = 80;																					//Set to 100
+		} else if (direction == -1) {																		//If scroll down
+			rectSize[0] = 130;                                                                                  //Set to 130
+			rectSize[1] = 80;																					//Set to 80
 		}	
 		foreach(Node to in treeNodes) {                                                             //Go through all tree objects
 			to.ChangeSize(rectSize);																			//Call ChangeSize with parameter rectSize
@@ -166,7 +170,7 @@ public class GUIDraggableObject {
 	public Vector2 dragStart;
 	private bool isDragging;
 	private bool isDraggingAll = false;
-	private Vector2 isDraggingAllStart = Vector2.zero;
+	private Vector2 draggingAllStart = Vector2.zero;
 
 	public GUIDraggableObject(Vector2 position) {
 		pos = position;
@@ -196,9 +200,9 @@ public class GUIDraggableObject {
 
 		if (isDragging && !isDraggingAll) {																					//If only this object is being dragged
 			Vector2 newPos = Event.current.mousePosition - dragStart;															//Update position to current mouse position minus start position
-			newPos.x = SnapAxisValue(newPos.x);
-			newPos.y = SnapAxisValue(newPos.y);
-			Debug.Log(newPos);
+			//newPos.x += SnapAxisValue(newPos.x);
+			//newPos.y += SnapAxisValue(newPos.y);
+			//Debug.Log(newPos);
 			pos = newPos;
 		}
 	}
@@ -210,22 +214,24 @@ public class GUIDraggableObject {
 
 	public void SetDraggingAll(bool dragAll) {
 		isDraggingAll = dragAll;																			//Set to the value of dragAll
-		if (dragAll) isDraggingAllStart = Position;															//If dragAll is true, set current position as start position
+		if (dragAll) draggingAllStart = Position;															//If dragAll is true, set current position as start position
 	}
 
 	public void DraggingAllSetPosition(Vector2 newPos) {
-		Position = isDraggingAllStart - newPos;																//Set position to start position minus the recieved delta movement for mouse
+		Position = draggingAllStart - newPos;																//Set position to start position minus the recieved delta movement for mouse
 	}
 }
 public class Node : GUIDraggableObject {
 	private TreeMaker treeMaker = null;
-	private bool isRoot = false;
+	public bool isRoot { get; internal set; } = false;
 	public string name { get; internal set; }
 	private float[] size;
 	public Vector3 childConnectionPoint = Vector3.zero;
 	public Vector3 parentConnectionPoint = Vector3.zero;
 	private Node parent = null;
 	private List<Node> children = new List<Node>();
+	public bool isSelected = false;
+	private NodeTypes nodeType = NodeTypes.PrioritySelector;
 
 	public Node(string name, float[] size, Vector2 position, TreeMaker treeMaker) : base(position) {
 		this.name = name;
@@ -273,18 +279,20 @@ public class Node : GUIDraggableObject {
 			}
 		}
 		//This button is for setting the child node of the current connection aka setting this node as a parent! It's confusing, I know.
-		if (GUI.Button(addChildButton, "")) {																			//Add a new button for connecting a child to the node
-			if (treeMaker.currentConnection == null) {																	//Check if a connection is currently acive
-				new NodeConnection(null, this, treeMaker);																	//Create a new connection, setting this node as the parent
-			} else {
-				if (!treeMaker.currentConnection.GotParent()) {																//Check if the current connections have a parent node
-					if (treeMaker.currentConnection.GetChild() != this) {														//Check that the current connection's child node isn't this node
-						treeMaker.currentConnection.FinishConnection(this);                                                         //Finish the connection
-					} else {
-						Debug.LogWarning("A node can't connect to itself!");
-					}
+		if (nodeType != NodeTypes.Leaf) {
+			if (GUI.Button(addChildButton, "")) {                                                                           //Add a new button for connecting a child to the node
+				if (treeMaker.currentConnection == null) {                                                                  //Check if a connection is currently acive
+					new NodeConnection(null, this, treeMaker);                                                                  //Create a new connection, setting this node as the parent
 				} else {
-					Debug.LogWarning("The connection already got a child node set!");
+					if (!treeMaker.currentConnection.GotParent()) {                                                             //Check if the current connections have a parent node
+						if (treeMaker.currentConnection.GetChild() != this) {                                                       //Check that the current connection's child node isn't this node
+							treeMaker.currentConnection.FinishConnection(this);                                                         //Finish the connection
+						} else {
+							Debug.LogWarning("A node can't connect to itself!");
+						}
+					} else {
+						Debug.LogWarning("The connection already got a child node set!");
+					}
 				}
 			}
 		}
@@ -303,6 +311,9 @@ public class Node : GUIDraggableObject {
 	public void RemoveChild(Node child) => children.ForEach(n => { if (n == child) children.Remove(n); } );
 	public Node GetParent() {
 		return parent;
+	}
+	public void ParseNodeInfoInEditPanel() {
+
 	}
 }
 
