@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public enum NodeTypes { ConcurrenceSelecter, Inverter, Leaf, PrioritySelector, Sequence, Succeeder }
+public enum NodeTypes { ConcurrenceSelecter, Inverter, Leaf, None, PrioritySelector, Sequence, Succeeder }
 public class TreeMaker : EditorWindow {
 	public Texture concurrenceSelector = null;
 	public Texture inverter = null;
@@ -45,8 +45,8 @@ public class TreeMaker : EditorWindow {
 	}
 
 	void NodeEditPanel() {
-		Rect drawRect = new Rect(0, 0, 200, position.height);
-		GUILayout.BeginArea(drawRect, GUI.skin.GetStyle("Box"));
+		Rect topRect = new Rect(0, 0, 200, position.height);
+		GUILayout.BeginArea(topRect, GUI.skin.GetStyle("Box"));
 		if (GUILayout.Button("Add Node")) {                                                                     //If the button is clicked, add a new object to the window and the list
 			treeNodes.Add(new TreeNode("Node " + (treeNodes.Count), rectSize, new Vector2(210, 50), this));
 		}
@@ -58,6 +58,13 @@ public class TreeMaker : EditorWindow {
 		if (EditorGUI.EndChangeCheck()) {
 			selectedNode.SetName(nodeName);
 			selectedNode.SetNodeType(nodeType);
+		}
+		GUILayout.EndArea();
+
+		Rect bottomRect = new Rect(0, position.height - 30, 200, position.height);
+		GUILayout.BeginArea(bottomRect, GUI.skin.GetStyle("Box"));
+		if (GUILayout.Button("Create Tree Object")) {
+			CreateBehaviorTreeObject();
 		}
 		GUILayout.EndArea();
 	}
@@ -234,7 +241,19 @@ public class TreeMaker : EditorWindow {
 	}
 
 	void CreateBehaviorTreeObject() {
+		Debug.Log("Instantiate");
+		TreeObject behaviorTree = CreateInstance<TreeObject>();
+		behaviorTree.name = "Tree1";
+		behaviorTree.nodeConnections = nodeConnections;
+		behaviorTree.treeNodes = treeNodes;
+		foreach (TreeNode treeNode in treeNodes) {
+			Node n = new Node();
+		}
+		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");
+		AssetDatabase.SaveAssets();
+		EditorUtility.FocusProjectWindow();
 
+		Selection.activeObject = behaviorTree;
 	}
 }
 
