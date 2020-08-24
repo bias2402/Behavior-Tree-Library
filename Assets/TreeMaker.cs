@@ -246,14 +246,12 @@ public class TreeMaker : EditorWindow {
 		behaviorTree.name = "Tree1";
 		behaviorTree.nodeConnections = nodeConnections;
 		behaviorTree.treeNodes = treeNodes;
+		behaviorTree.something = 1;
 		foreach (TreeNode treeNode in treeNodes) {
 			Node n = new Node();
 		}
 		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");
 		AssetDatabase.SaveAssets();
-		EditorUtility.FocusProjectWindow();
-
-		Selection.activeObject = behaviorTree;
 	}
 }
 
@@ -317,6 +315,7 @@ public class GUIDraggableObject {
 	}
 }
 
+[Serializable]
 public class TreeNode : GUIDraggableObject {
 	private TreeMaker treeMaker = null;
 	public bool isRoot { get; internal set; } = false;
@@ -479,6 +478,7 @@ public class TreeNode : GUIDraggableObject {
 	}
 }
 
+[Serializable]
 public class NodeConnection {
 	public Rect connectionRect { get; internal set; }
 	private TreeMaker treeMaker = null;
