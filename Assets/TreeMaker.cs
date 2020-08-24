@@ -13,7 +13,7 @@ public class TreeMaker : EditorWindow {
 	public Texture succeeder = null;
 	public Texture delete = null;
 
-	private List<Node> treeNodes = new List<Node>();
+	private List<TreeNode> treeNodes = new List<TreeNode>();
 	private List<NodeConnection> nodeConnections = new List<NodeConnection>();
 	private Rect dropTargetRect = new Rect(10.0f, 10.0f, 30.0f, 30.0f);
 	private float[] rectSize = { 80, 30 };
@@ -23,10 +23,10 @@ public class TreeMaker : EditorWindow {
 	private bool draggingAll = false;
 	private Vector2 draggingAllStart = Vector2.zero;
 	private Vector2 draggingAllCurrent = Vector2.zero;
-	private Node root = null;
+	private TreeNode root = null;
 
 	[Header("Node informations")]
-	private Node selectedNode = null;
+	private TreeNode selectedNode = null;
 	private string nodeName = "";
 	private NodeTypes nodeType = NodeTypes.PrioritySelector;
 
@@ -34,18 +34,21 @@ public class TreeMaker : EditorWindow {
 	public static void Launch() {
 		GetWindow(typeof(TreeMaker)).Show();
 	}
+
 	void Update() {
 		Repaint();
 	}
+
 	public void PassNodeInformation(string nodeName, NodeTypes nodeType) {
 		this.nodeName = nodeName;
 		this.nodeType = nodeType;
 	}
+
 	void NodeEditPanel() {
 		Rect drawRect = new Rect(0, 0, 200, position.height);
 		GUILayout.BeginArea(drawRect, GUI.skin.GetStyle("Box"));
 		if (GUILayout.Button("Add Node")) {                                                                     //If the button is clicked, add a new object to the window and the list
-			treeNodes.Add(new Node("Node " + (treeNodes.Count), rectSize, new Vector2(210, 50), this));
+			treeNodes.Add(new TreeNode("Node " + (treeNodes.Count), rectSize, new Vector2(210, 50), this));
 		}
 		EditorGUI.BeginChangeCheck();
 		GUILayout.Label("Node name:");
@@ -58,14 +61,15 @@ public class TreeMaker : EditorWindow {
 		}
 		GUILayout.EndArea();
 	}
+
 	public void OnGUI() {
 		if (root == null) {
-			treeNodes.Add(root = new Node("Root", rectSize, new Vector2(position.width / 2, 50), this));
+			treeNodes.Add(root = new TreeNode("Root", rectSize, new Vector2(position.width / 2, 50), this));
 			treeNodes[0].MakeRoot();
 		}
 		wantsMouseMove = true;
 		NodeEditPanel();																						//Draw the edit panel
-		Node toFront, dropDead;
+		TreeNode toFront, dropDead;
 		bool previousState;
 		Color color;
 
@@ -73,7 +77,7 @@ public class TreeMaker : EditorWindow {
 
         //Drag and drop, recoloring, selecting, and stacking for all nodes
         #region
-        foreach (Node n in treeNodes) {                                                          //Go through all the spawned objects
+        foreach (TreeNode n in treeNodes) {                                                          //Go through all the spawned objects
 			previousState = n.Dragging;																		//Save bool value about data being dragged last time it was checked
 
 			color = GUI.color;                                                                              //Save the default color
@@ -92,7 +96,7 @@ public class TreeMaker : EditorWindow {
 					n.isSelected = true;
 					selectedNode = n;
 					n.ParseNodeInfoToEditPanel();
-					foreach (Node otherNodes in treeNodes) {                                                        //Go through all nodes	
+					foreach (TreeNode otherNodes in treeNodes) {                                                        //Go through all nodes	
 						if (otherNodes != n) {																			
 							otherNodes.isSelected = false;
 							GUI.color = color;                                                                              //Set color of all but this node to standard GUI color
@@ -147,7 +151,7 @@ public class TreeMaker : EditorWindow {
 					draggingAll = true;                                                                                 //Set to true
 					draggingAllStart = Event.current.mousePosition;                                                     //Save current mouse position as start position
 					draggingAllCurrent = Event.current.mousePosition;                                                   //Save current mouse position
-					foreach (Node to in treeNodes) {                                                                    //Go through all tree objects
+					foreach (TreeNode to in treeNodes) {                                                                    //Go through all tree objects
 						to.SetDraggingAll(true);                                                                            //Call SetDraggingAll with parameter true
 					}
 				}
@@ -160,7 +164,7 @@ public class TreeMaker : EditorWindow {
 			Event.current.Use();																				//Trigger the event to use it
 		} else if (Event.current.type == EventType.MouseUp) {												//Check for mouse up event
 			draggingAll = false;																				//Set to false
-			foreach (Node to in treeNodes) {																	//Go through all tree objects
+			foreach (TreeNode to in treeNodes) {																	//Go through all tree objects
 				to.SetDraggingAll(false);																			//Call SetDraggingAll with parameter false
 			}
 			Event.current.Use();                                                                                //Trigger the event to use it
@@ -171,7 +175,7 @@ public class TreeMaker : EditorWindow {
 			mousePos = Event.current.mousePosition;
 		}
 		if (draggingAll) {																					//If draggingAll is true
-			foreach (Node to in treeNodes) {															//Go through all tree objects
+			foreach (TreeNode to in treeNodes) {															//Go through all tree objects
 				to.DraggingAllSetPosition(draggingAllStart - draggingAllCurrent);									//Call DraggingAllSetPosition with parameter of the calculated delta for mouse movement
 			}
 		}
@@ -189,6 +193,7 @@ public class TreeMaker : EditorWindow {
 			if (index != -1) RemoveConnection(index);
 		} 
 	}
+
     public void Zoom(int direction) {																	
 		if (direction == 1) {																				//If scroll up
 			rectSize[0] = 80;																					//Set to 80
@@ -197,16 +202,20 @@ public class TreeMaker : EditorWindow {
 			rectSize[0] = 130;                                                                                  //Set to 130
 			rectSize[1] = 80;																					//Set to 80
 		}	
-		foreach(Node to in treeNodes) {                                                             //Go through all tree objects
+		foreach(TreeNode to in treeNodes) {                                                             //Go through all tree objects
 			to.ChangeSize(rectSize);                                                                            //Call ChangeSize with parameter rectSize
 		}
 	}
+
 	public void AddNodeConnection(NodeConnection nodeConnection) => nodeConnections.Add(nodeConnection);
+
 	public void SetCurrentConnection(NodeConnection nodeConnection) => currentConnection = nodeConnection;
+
 	public void RemoveConnection(int index) {
 		if (nodeConnections.Count - 1 <= index) nodeConnections.RemoveAt(index);
 	}
-	public void FindImproperConnections(Node nodeToCheckAgainst, bool isParent) {
+
+	public void FindImproperConnections(TreeNode nodeToCheckAgainst, bool isParent) {
 		int connectionToRemove = -1;
 		nodeConnections.ForEach(n => { if (n.GetParent() == nodeToCheckAgainst) connectionToRemove = GetConnectionIndex(n); });
 		Debug.Log(nodeConnections.Count);
@@ -214,6 +223,7 @@ public class TreeMaker : EditorWindow {
 			nodeConnections[connectionToRemove].DeleteConnection();
 		}
 	}
+
 	public int GetConnectionIndex(NodeConnection nodeConnection) {
 		for (int i = 0; i < nodeConnections.Count; i++) {
 			if (nodeConnections[i] == nodeConnection) {
@@ -222,7 +232,12 @@ public class TreeMaker : EditorWindow {
 		}
 		return 0;
 	}
+
+	void CreateBehaviorTreeObject() {
+
+	}
 }
+
 public class GUIDraggableObject {
 	protected Vector2 pos;
 	public Vector2 dragStart;
@@ -233,11 +248,13 @@ public class GUIDraggableObject {
 	public GUIDraggableObject(Vector2 position) {
 		pos = position;
 	}
+
 	public bool Dragging {																									//Get Dragging
 		get {
 			return isDragging;
 		}
 	}
+
 	public Vector2 Position {																								//Get or Set Position
 		get {
 			return pos;
@@ -264,6 +281,7 @@ public class GUIDraggableObject {
 			pos = newPos;
 		}
 	}
+
 	//Snap using mouse pos. When mouse is more than 2.5 away, move and update dragStart for new snap start point
 	float SnapAxisValue(float value) {
 		int offset = (Mathf.Round(value) % 5) >= 3 ? 5 : 0;
@@ -279,23 +297,25 @@ public class GUIDraggableObject {
 		Position = draggingAllStart - newPos;																//Set position to start position minus the recieved delta movement for mouse
 	}
 }
-public class Node : GUIDraggableObject {
+
+public class TreeNode : GUIDraggableObject {
 	private TreeMaker treeMaker = null;
 	public bool isRoot { get; internal set; } = false;
 	public string name { get; internal set; }
 	private float[] size;
 	public Vector3 childConnectionPoint = Vector3.zero;
 	public Vector3 parentConnectionPoint = Vector3.zero;
-	private Node parent = null;
-	private List<Node> children = new List<Node>();
+	private TreeNode parent = null;
+	private List<TreeNode> children = new List<TreeNode>();
 	public bool isSelected = false;
 	private NodeTypes nodeType = NodeTypes.PrioritySelector;
 
-	public Node(string name, float[] size, Vector2 position, TreeMaker treeMaker) : base(position) {
+	public TreeNode(string name, float[] size, Vector2 position, TreeMaker treeMaker) : base(position) {
 		this.name = name;
 		this.size = size;
 		this.treeMaker = treeMaker;
 	}
+
 	public void OnGUI() {
 		Rect drawRect = new Rect(pos.x, pos.y, size[0], size[1]);													//Draw a rect
 
@@ -402,15 +422,21 @@ public class Node : GUIDraggableObject {
 		}
 		Drag(drawRect);																								//Drag the rect
 	}
+
 	public void MakeRoot() => isRoot = true;
+
 	public void ChangeSize(float[] newSize) => size = newSize;
+
 	public void SetName(string name) {
 		this.name = name;
 		OnGUI();
 	}
-	public void SetParent(Node parent) => this.parent = parent;
-	public void AddChild(Node child) => children.Add(child);
-	public void RemoveChild(Node child) {
+
+	public void SetParent(TreeNode parent) => this.parent = parent;
+
+	public void AddChild(TreeNode child) => children.Add(child);
+
+	public void RemoveChild(TreeNode child) {
 		int index = -1;
 		for (int i = 0; i < children.Count; i++) {
 			if (children[i] == child) {
@@ -422,10 +448,13 @@ public class Node : GUIDraggableObject {
 		children.RemoveAt(index);
 		Debug.Log("Removed a child");
 	}
-	public Node GetParent() {
+
+	public TreeNode GetParent() {
 		return parent;
 	}
+
 	public void SetNodeType(NodeTypes type) => nodeType = type;
+
 	public void ParseNodeInfoToEditPanel() {
 		treeMaker.PassNodeInformation(name, nodeType);
 	}
@@ -434,13 +463,13 @@ public class Node : GUIDraggableObject {
 public class NodeConnection {
 	public Rect connectionRect { get; internal set; }
 	private TreeMaker treeMaker = null;
-	private Node childNode = null;
-	private Node parentNode = null;
+	private TreeNode childNode = null;
+	private TreeNode parentNode = null;
 	private Vector3 childPoint = Vector3.zero;
 	private Vector3 parentPoint = Vector3.zero;
 	private bool isDeleting = false;
 
-	public NodeConnection(Node child, Node parent, TreeMaker treeMaker) {
+	public NodeConnection(TreeNode child, TreeNode parent, TreeMaker treeMaker) {
 		if (child == null && parent == null) {
 			Debug.LogError("No start nor end node was given! Connection not created!");
 			return;
@@ -457,6 +486,7 @@ public class NodeConnection {
 		treeMaker.AddNodeConnection(this);
 		this.treeMaker = treeMaker;
 	}
+
 	public void OnGUI() {
 		if (isDeleting) return;
 		if (childNode == null && parentNode == null) {
@@ -480,10 +510,12 @@ public class NodeConnection {
 			GUILayout.EndArea();
 		}
 	}
+
 	public bool IsFullyConnected() {
 		return childNode == null || parentNode == null ? false : true;
 	}
-	public void FinishConnection(Node n) {
+
+	public void FinishConnection(TreeNode n) {
 		if (parentNode == null) {
 			parentNode = n;
 			Debug.Log(treeMaker.currentConnection);
@@ -496,18 +528,23 @@ public class NodeConnection {
 		}
 		treeMaker.SetCurrentConnection(null);
 	}
+
 	public bool GotChild() {
 		return childNode == null ? false : true;
 	}
+
 	public bool GotParent() {
 		return parentNode == null ? false : true;
 	}
-	public Node GetChild() {
+
+	public TreeNode GetChild() {
 		return childNode;
 	}
-	public Node GetParent() {
+
+	public TreeNode GetParent() {
 		return parentNode;
 	}
+
 	public void DeleteConnection() {
 		isDeleting = true;
 		if (childNode != null) childNode.SetParent(null);
