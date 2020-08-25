@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
+  m_IndirectSpecularColor: {r: 0, g: 0, b: 0, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -325,7 +325,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c73c10021f8f714a993d3c34b28a9f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tree: {fileID: 0}
+  tree: {fileID: 11400000, guid: ee599a94654cf884fa69801a310d4a46, type: 2}
+  nodes: []
+  leafEvents:
+  - leafName: Node 2
+    leafMethod:
+      m_PersistentCalls:
+        m_Calls: []
+  - leafName: Node 1
+    leafMethod:
+      m_PersistentCalls:
+        m_Calls: []
+  - leafName: Node 3
+    leafMethod:
+      m_PersistentCalls:
+        m_Calls: []
+  references:
+    version: 1
 --- !u!4 &1125056250
 Transform:
   m_ObjectHideFlags: 0

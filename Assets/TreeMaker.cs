@@ -1,8 +1,10 @@
 ﻿//Developed by Tobias Oliver Jensen, Game Development & Learning Technology master student at the University of Southern Denmark, 2020
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 
 public enum NodeTypes { ConcurrenceSelecter, Inverter, Leaf, None, PrioritySelector, Sequence, Succeeder }
 public class TreeMaker : EditorWindow {
@@ -10,8 +12,9 @@ public class TreeMaker : EditorWindow {
 	public Texture inverter = null;
 	public Texture leaf = null;
 	public Texture prioritySelector = null;
+	public Texture root = null;
 	public Texture sequence = null;
-	public Texture succeeder = null;
+	public Texture succeeder = null; 
 	public Texture delete = null;
 
 	private List<TreeNode> treeNodes = new List<TreeNode>();
@@ -24,12 +27,18 @@ public class TreeMaker : EditorWindow {
 	private bool draggingAll = false;
 	private Vector2 draggingAllStart = Vector2.zero;
 	private Vector2 draggingAllCurrent = Vector2.zero;
-	private TreeNode root = null;
+	private TreeNode treeRoot = null;
 
 	[Header("Node informations")]
 	private TreeNode selectedNode = null;
 	private string nodeName = "";
+	private string leafMethod = "";
 	private NodeTypes nodeType = NodeTypes.PrioritySelector;
+
+	[Header("Tree Options")]
+	private string treeName = "";
+	private string error = "";
+	private bool isTreeNameInUse = false;
 
 	[MenuItem("Window/Tree Maker")]
 	public static void Launch() {
@@ -65,8 +74,24 @@ public class TreeMaker : EditorWindow {
 		}
 		GUILayout.EndArea();
 
-		Rect bottomRect = new Rect(0, position.height - 30, 200, position.height);
+		Rect bottomRect = new Rect(0, position.height - 90, 200, position.height);
 		GUILayout.BeginArea(bottomRect, GUI.skin.GetStyle("Box"));
+		GUILayout.Label("Tree name:");
+		treeName = EditorGUILayout.TextField(treeName);
+		error = "";
+		isTreeNameInUse = false;
+		foreach (string guid in AssetDatabase.FindAssets(treeName, new[] { "Assets/Trees" })) {
+			string temp = AssetDatabase.GUIDToAssetPath(guid);
+			temp = temp.Substring(13, temp.Length - 13);
+			temp = temp.Substring(0, temp.Length - 6);
+
+			if (treeName.Equals(temp)) {
+				error = "Name already in use!";
+				isTreeNameInUse = true;
+				break;
+			}
+		}
+		GUILayout.Label(error);
 		if (GUILayout.Button("Create Tree Object")) {
 			CreateBehaviorTreeObject();
 		}
@@ -74,9 +99,10 @@ public class TreeMaker : EditorWindow {
 	}
 
 	public void OnGUI() {
-		if (root == null) {
-			treeNodes.Add(root = new TreeNode("Root", rectSize, new Vector2(position.width / 2, 50), this));
+		if (treeRoot == null) {
+			treeNodes.Add(treeRoot = new TreeNode("Root", rectSize, new Vector2(position.width / 2, 50), this));
 			treeNodes[0].MakeRoot();
+			treeNodes[0].SetTypeToRoot();
 		}
 		wantsMouseMove = true;
 		NodeEditPanel();																						//Draw the edit panel
@@ -212,16 +238,17 @@ public class TreeMaker : EditorWindow {
 		}
 	}
 
-    public void Zoom(int direction) {																	
+    public void Zoom(int direction) {
 		if (direction == 1) {																				//If scroll up
-			rectSize[0] = 80;																					//Set to 80
-			rectSize[1] = 30;                                                                                   //Set to 30
+			rectSize[0] = 80;																					//Set width 80
+			rectSize[1] = 30;                                                                                   //Set height 30
 		} else if (direction == -1) {																		//If scroll down
-			rectSize[0] = 130;                                                                                  //Set to 130
-			rectSize[1] = 80;																					//Set to 80
-		}	
-		foreach(TreeNode to in treeNodes) {                                                             //Go through all tree objects
-			to.ChangeSize(rectSize);                                                                            //Call ChangeSize with parameter rectSize
+			rectSize[0] = 130;                                                                                  //Set width 130
+			rectSize[1] = 80;                                                                                   //Set height 80
+		}
+
+		foreach (TreeNode tn in treeNodes) {                                                             //Go through all tree objects
+			tn.ChangeSize(rectSize);                                                                            //Call ChangeSize with parameter rectSize
 		}
 	}
 
@@ -252,15 +279,31 @@ public class TreeMaker : EditorWindow {
 	}
 
 	void CreateBehaviorTreeObject() {
-		Debug.Log("Instantiate");
+		if (isTreeNameInUse) {
+			Debug.LogError("Name already in use!");
+			return;
+		}
 		TreeObject behaviorTree = CreateInstance<TreeObject>();
-		behaviorTree.name = "Tree1";
+		behaviorTree.name = treeName;
 		behaviorTree.nodeConnections = nodeConnections;
 		behaviorTree.treeNodes = treeNodes;
-		behaviorTree.something = 1;
+		List<Node> nodes = new List<Node>();
+		List<TreeNode> treeNodesForSetup = new List<TreeNode>();
 		foreach (TreeNode treeNode in treeNodes) {
-			Node n = new Node();
+			if (treeNode.IsConnectedToRoot()) {
+				nodes.Add(new Node(treeNode.name, treeNode.GetNodeType()));
+				treeNodesForSetup.Add(treeNode);
+			}
 		}
+		behaviorTree.nodes = new List<Node>(nodes);
+		int leafCount = 0;
+		foreach (Node n in nodes) {
+			if (n.GetNodeType() == NodeTypes.Leaf) {
+				leafCount++;
+			}
+		}
+		behaviorTree.leafCount = leafCount;
+
 		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");
 		AssetDatabase.SaveAssets();
 	}
@@ -410,26 +453,36 @@ public class TreeNode : GUIDraggableObject {
 				}
 			}
 		}
-		if (size[0] > 100) {
-			switch (nodeType) {
-				case NodeTypes.ConcurrenceSelecter:
-					GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.concurrenceSelector);
-					break;
-				case NodeTypes.Inverter:
-					GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.inverter);
-					break;
-				case NodeTypes.Leaf:
-					GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.leaf);
-					break;
-				case NodeTypes.PrioritySelector:
-					GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.prioritySelector);
-					break;
-				case NodeTypes.Sequence:
-					GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.sequence);
-					break;
-				case NodeTypes.Succeeder:
-					GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.succeeder);
-					break;
+		
+		if (!isRoot) {
+			if (size[0] > 100) {
+				switch (nodeType) {
+					case NodeTypes.ConcurrenceSelecter:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.concurrenceSelector);
+						break;
+					case NodeTypes.Inverter:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.inverter);
+						break;
+					case NodeTypes.Leaf:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.leaf);
+						break;
+					case NodeTypes.PrioritySelector:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.prioritySelector);
+						break;
+					case NodeTypes.Sequence:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.sequence);
+						break;
+					case NodeTypes.Succeeder:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.succeeder);
+						break;
+					default:
+						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.delete);
+						break;
+				}
+			}
+		} else {
+			if (size[0] > 100) {
+				GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.root);
 			}
 		}
 		GUILayout.EndArea();
@@ -438,9 +491,7 @@ public class TreeNode : GUIDraggableObject {
         if (nodeType == NodeTypes.Inverter || nodeType == NodeTypes.Succeeder) {
 			if (children.Count > 1) {
 				int iterations = children.Count;
-				Debug.Log("Child count: " + children.Count);
 				for (int i = 1; i < iterations; i++) {
-					Debug.Log("Ran"); 
 					treeMaker.FindImproperConnections(this, true);
 					if (children.Count > 1) children.RemoveAt(1);
 				}
@@ -453,7 +504,15 @@ public class TreeNode : GUIDraggableObject {
 		Drag(drawRect);																								//Drag the rect
 	}
 
+	public bool IsConnectedToRoot() {
+		if (isRoot) return true;
+		else if (GetParent() != null) return GetParent().IsConnectedToRoot();
+		else return false;
+	}
+
 	public void MakeRoot() => isRoot = true;
+
+	public void SetTypeToRoot() => nodeType = NodeTypes.None;
 
 	public void ChangeSize(float[] newSize) => size = newSize;
 
@@ -476,18 +535,19 @@ public class TreeNode : GUIDraggableObject {
 		}
 		if (index == -1) return;
 		children.RemoveAt(index);
-		Debug.Log("Removed a child");
 	}
 
 	public TreeNode GetParent() {
 		return parent;
 	}
 
+	public NodeTypes GetNodeType() {
+		return nodeType;
+	}
+
 	public void SetNodeType(NodeTypes type) => nodeType = type;
 
-	public void ParseNodeInfoToEditPanel() {
-		treeMaker.PassNodeInformation(name, nodeType);
-	}
+	public void ParseNodeInfoToEditPanel() => treeMaker.PassNodeInformation(name, nodeType);
 }
 
 [Serializable]
@@ -549,7 +609,6 @@ public class NodeConnection {
 	public void FinishConnection(TreeNode n) {
 		if (parentNode == null) {
 			parentNode = n;
-			Debug.Log(treeMaker.currentConnection);
 			childNode.SetParent(parentNode);
 			parentNode.AddChild(childNode);
 		} else {

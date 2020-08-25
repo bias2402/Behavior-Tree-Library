@@ -5,13 +5,27 @@ using System;
 
 [Serializable]
 public class Node {
+    private string nodeName = "";
     private NodeTypes nodeType = NodeTypes.None;
     private Node parent = null;
-    private List<Node> children = new List<Node>();
+    [SerializeReference] private List<Node> children = new List<Node>();
     private int currentChildRunning = 0;
     private bool isRunning = false;
     private string leafMethod = "";
     private TreeHandler handler = null;
+
+    public Node(string name, NodeTypes nodeType) {
+        nodeName = name;
+        this.nodeType = nodeType;
+    }
+
+    public NodeTypes GetNodeType() {
+        return nodeType;
+    }
+
+    public string GetNodeName() {
+        return nodeName;
+    }
 
     public void SetParent(Node parent) => this.parent = parent;
 
