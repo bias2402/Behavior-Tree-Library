@@ -1,4 +1,5 @@
-﻿using System;
+﻿//Developed by Tobias Oliver Jensen, Game Development & Learning Technology master student at the University of Southern Denmark, 2020
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -35,7 +36,7 @@ public class TreeMaker : EditorWindow {
 		GetWindow(typeof(TreeMaker)).Show();
 	}
 
-	void Update() {
+	void OnInspectorUpdate() {
 		Repaint();
 	}
 
@@ -47,6 +48,9 @@ public class TreeMaker : EditorWindow {
 	void NodeEditPanel() {
 		Rect topRect = new Rect(0, 0, 200, position.height);
 		GUILayout.BeginArea(topRect, GUI.skin.GetStyle("Box"));
+		if (GUILayout.Button("Reset Root Position")) {
+			treeNodes[0].Position = new Vector2(position.width / 2, 50);
+		}
 		if (GUILayout.Button("Add Node")) {                                                                     //If the button is clicked, add a new object to the window and the list
 			treeNodes.Add(new TreeNode("Node " + (treeNodes.Count), rectSize, new Vector2(210, 50), this));
 		}
@@ -164,7 +168,7 @@ public class TreeMaker : EditorWindow {
 				}
 			} else if (Event.current.button == 1) {
 				if (currentConnection != null) {
-					currentConnection.DeleteConnection();
+					currentConnection.DeleteConnection(false);
 					currentConnection = null;
 				}
 			}
@@ -189,6 +193,7 @@ public class TreeMaker : EditorWindow {
 		#endregion
 
 		NodeEditPanel();                                                                                    //Redraw to put panel on-top of all other elements
+
 		if (currentConnection == null) {
 			int index = -1;
 			for (int i = 0; i < nodeConnections.Count; i++) {
@@ -198,7 +203,13 @@ public class TreeMaker : EditorWindow {
 				}
 			}
 			if (index != -1) RemoveConnection(index);
-		} 
+		} else {
+			if (currentConnection.GotChild() && currentConnection.GotParent()) {
+				Debug.LogWarning("A phantom connection! BE GONE!");
+				currentConnection.DeleteConnection(true);
+				currentConnection = null; 
+			}
+		}
 	}
 
     public void Zoom(int direction) {																	
@@ -227,7 +238,7 @@ public class TreeMaker : EditorWindow {
 		nodeConnections.ForEach(n => { if (n.GetParent() == nodeToCheckAgainst) connectionToRemove = GetConnectionIndex(n); });
 		Debug.Log(nodeConnections.Count);
 		if (connectionToRemove != -1) {
-			nodeConnections[connectionToRemove].DeleteConnection();
+			nodeConnections[connectionToRemove].DeleteConnection(false);
 		}
 	}
 
@@ -324,7 +335,7 @@ public class TreeNode : GUIDraggableObject {
 	public Vector3 childConnectionPoint = Vector3.zero;
 	public Vector3 parentConnectionPoint = Vector3.zero;
 	private TreeNode parent = null;
-	private List<TreeNode> children = new List<TreeNode>();
+	[SerializeReference] private List<TreeNode> children = new List<TreeNode>(); 
 	public bool isSelected = false;
 	private NodeTypes nodeType = NodeTypes.PrioritySelector;
 
@@ -379,7 +390,7 @@ public class TreeNode : GUIDraggableObject {
 		if (nodeType != NodeTypes.Leaf) {
 			//This button is for setting the child node of the current connection aka setting this node as a parent! It's confusing, I know.
 			if (GUI.Button(addChildButton, "")) {                                                                           //Add a new button for connecting a child to the node
-				if ((nodeType == NodeTypes.Inverter && children.Count <= 1) || (nodeType == NodeTypes.Succeeder && children.Count <= 1)) {
+				if ((nodeType == NodeTypes.Inverter && children.Count >= 1) || (nodeType == NodeTypes.Succeeder && children.Count >= 1)) {
 					Debug.LogWarning("A decorater can only have one child!");
 				} else {
 					if (treeMaker.currentConnection == null) {                                                                  //Check if a connection is currently acive
@@ -393,6 +404,7 @@ public class TreeNode : GUIDraggableObject {
 							}
 						} else {
 							Debug.LogWarning("The connection already got a child node set! " + treeMaker.currentConnection.GetChild());
+							Debug.LogWarning(children.Count);
 						}
 					}
 				}
@@ -524,7 +536,7 @@ public class NodeConnection {
 			GUILayout.BeginArea(drawRect);
 			Rect btnRect = new Rect(0, 0, drawRect.width, drawRect.height);
 			if (GUI.Button(btnRect, treeMaker.delete)) {
-				DeleteConnection();
+				DeleteConnection(false);
 			}
 			GUILayout.EndArea();
 		}
@@ -564,12 +576,12 @@ public class NodeConnection {
 		return parentNode;
 	}
 
-	public void DeleteConnection() {
+	public void DeleteConnection(bool isPhantom) {
 		isDeleting = true;
 		if (childNode != null) childNode.SetParent(null);
 		if (parentNode != null) parentNode.RemoveChild(childNode);
 		childNode = null;
 		parentNode = null;
-		treeMaker.RemoveConnection(treeMaker.GetConnectionIndex(this)); 
+		if (!isPhantom) treeMaker.RemoveConnection(treeMaker.GetConnectionIndex(this));
 	}
 }
