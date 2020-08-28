@@ -5,10 +5,10 @@ using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
+using System.Linq;
 
-public enum NodeTypes { ConcurrenceSelecter, Inverter, Leaf, None, PrioritySelector, Sequence, Succeeder }
+public enum NodeTypes { Inverter, Leaf, None, Selector, Sequence, Succeeder }
 public class TreeMaker : EditorWindow {
-	public Texture concurrenceSelector = null;
 	public Texture inverter = null;
 	public Texture leaf = null;
 	public Texture prioritySelector = null;
@@ -33,7 +33,7 @@ public class TreeMaker : EditorWindow {
 	private TreeNode selectedNode = null;
 	private string nodeName = "";
 	private string leafMethod = "";
-	private NodeTypes nodeType = NodeTypes.PrioritySelector;
+	private NodeTypes nodeType = NodeTypes.Selector;
 
 	[Header("Tree Options")]
 	private string treeName = "";
@@ -278,9 +278,22 @@ public class TreeMaker : EditorWindow {
 		return 0;
 	}
 
+	int GetTreeNodesIndexInList(TreeNode tn) {
+		for(int i = 0; i < treeNodes.Count; i++) {
+			if (treeNodes[i] == tn) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
 	void CreateBehaviorTreeObject() {
 		if (isTreeNameInUse) {
 			Debug.LogError("Name already in use!");
+			return;
+		}
+		if (treeName.Equals(string.Empty)) {
+			Debug.LogError("No name entered");
 			return;
 		}
 		TreeObject behaviorTree = CreateInstance<TreeObject>();
@@ -296,6 +309,23 @@ public class TreeMaker : EditorWindow {
 			}
 		}
 		behaviorTree.nodes = new List<Node>(nodes);
+
+		for (int i = 0; i < nodes.Count; i++) {
+			if (nodes[i].GetNodeType() == NodeTypes.Leaf) continue;
+
+			List<TreeNode> children = new List<TreeNode>(treeNodes[i].GetChildren());
+			if (children.Count == 0) continue;
+
+			for (int j = 0; j < children.Count; j++) {
+				for (int k = 0; k < nodes.Count; k++) {
+					if (children[j].GetNodeName() == nodes[k].GetNodeName()) {
+						nodes[i].AddChild(nodes[k]);
+						break;
+					}
+				}
+			}
+		}
+
 		int leafCount = 0;
 		foreach (Node n in nodes) {
 			if (n.GetNodeType() == NodeTypes.Leaf) {
@@ -373,14 +403,14 @@ public class GUIDraggableObject {
 public class TreeNode : GUIDraggableObject {
 	private TreeMaker treeMaker = null;
 	public bool isRoot { get; internal set; } = false;
-	public string name { get; internal set; }
+	[SerializeField] public string name { get; internal set; }
 	private float[] size;
 	public Vector3 childConnectionPoint = Vector3.zero;
 	public Vector3 parentConnectionPoint = Vector3.zero;
 	private TreeNode parent = null;
 	[SerializeReference] private List<TreeNode> children = new List<TreeNode>(); 
 	public bool isSelected = false;
-	private NodeTypes nodeType = NodeTypes.PrioritySelector;
+	private NodeTypes nodeType = NodeTypes.Selector;
 
 	public TreeNode(string name, float[] size, Vector2 position, TreeMaker treeMaker) : base(position) {
 		this.name = name;
@@ -457,16 +487,13 @@ public class TreeNode : GUIDraggableObject {
 		if (!isRoot) {
 			if (size[0] > 100) {
 				switch (nodeType) {
-					case NodeTypes.ConcurrenceSelecter:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.concurrenceSelector);
-						break;
 					case NodeTypes.Inverter:
 						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.inverter);
 						break;
 					case NodeTypes.Leaf:
 						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.leaf);
 						break;
-					case NodeTypes.PrioritySelector:
+					case NodeTypes.Selector:
 						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.prioritySelector);
 						break;
 					case NodeTypes.Sequence:
@@ -512,13 +539,17 @@ public class TreeNode : GUIDraggableObject {
 
 	public void MakeRoot() => isRoot = true;
 
-	public void SetTypeToRoot() => nodeType = NodeTypes.None;
+	public void SetTypeToRoot() => nodeType = NodeTypes.Selector;
 
 	public void ChangeSize(float[] newSize) => size = newSize;
 
 	public void SetName(string name) {
 		this.name = name;
 		OnGUI();
+	}
+
+	public string GetNodeName() {
+		return name;
 	}
 
 	public void SetParent(TreeNode parent) => this.parent = parent;
@@ -535,6 +566,10 @@ public class TreeNode : GUIDraggableObject {
 		}
 		if (index == -1) return;
 		children.RemoveAt(index);
+	}
+
+	public List<TreeNode> GetChildren() {
+		return children;
 	}
 
 	public TreeNode GetParent() {

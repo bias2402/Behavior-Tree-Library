@@ -5,14 +5,16 @@ using System;
 
 [Serializable]
 public class Node {
+    [Header("Basic Node Settings")]
     private string nodeName = "";
     private NodeTypes nodeType = NodeTypes.None;
     private Node parent = null;
+    private bool isRunning = false;
     [SerializeReference] private List<Node> children = new List<Node>();
     private int currentChildRunning = 0;
-    private bool isRunning = false;
-    private string leafMethod = "";
-    private TreeHandler handler = null;
+    private LeafMethod leafMethod = null;
+
+    private bool isDebugging = false;
 
     public Node(string name, NodeTypes nodeType) {
         nodeName = name;
@@ -31,29 +33,66 @@ public class Node {
 
     public void AddChild(Node child) => children.Add(child);
 
-    public void SetHandler(TreeHandler handler) => this.handler = handler;
+    public void SetLeafMethod(LeafMethod leafMethod) => this.leafMethod = leafMethod;
+
+    public void SetDebugMode(bool isDebugging) => this.isDebugging = isDebugging;
+
+    public bool IsNodeRunning() {
+        return isRunning;
+    }
 
     public void Execute() {
-        if (nodeType != NodeTypes.Leaf) {
-            children[currentChildRunning].Execute();
-        } else {
-            
+        if (isDebugging) {
+            DebugMeSenpai(GetNodeName() + " is executing");
+        }
+        Debug.Log(GetNodeType());
+
+        isRunning = true;
+        switch (nodeType) {
+            case NodeTypes.Leaf:
+                leafMethod.Execute();
+                break;
+            case NodeTypes.Selector:
+            case NodeTypes.Sequence:
+                CheckIfAChildIsRunning();
+                children[currentChildRunning].Execute();
+                break;
+            case NodeTypes.Inverter:
+            case NodeTypes.Succeeder:
+                children[currentChildRunning].Execute();
+                break;
         }
     }
 
     public void Callback(bool result) {
+        if (isDebugging) {
+            if (GetNodeType() == NodeTypes.Leaf) {
+                DebugMeSenpai(GetNodeName() + " has finished its execution with a result of " + result);
+            } else {
+                DebugMeSenpai(children[currentChildRunning].GetNodeName() + " has called back to its parent " + GetNodeName() + " with a result of " + result);
+            }
+        }
+
+        isRunning = false;
         switch (nodeType) {
-            case NodeTypes.ConcurrenceSelecter:
-                parent.Callback(result);
-                break;
             case NodeTypes.Leaf:
                 parent.Callback(result);
                 break;
-            case NodeTypes.PrioritySelector:
-                parent.Callback(result);
+            case NodeTypes.Selector:
+                currentChildRunning++;
+                if (result || currentChildRunning >= children.Count) {
+                    if (parent != null) parent.Callback(result);
+                    else DebugMeSenpai(GetNodeName() + " is the top of the tree. Execution done for this frame.");
+                } else Execute();
                 break;
             case NodeTypes.Sequence:
-                parent.Callback(result);
+                currentChildRunning++;
+                if (result && currentChildRunning < children.Count) Execute(); 
+                else {
+                    currentChildRunning = 0;
+                    if (parent != null) parent.Callback(result);
+                    else DebugMeSenpai(GetNodeName() + " is the top of the tree. Execution done for this frame.");
+                }
                 break;
             case NodeTypes.Inverter:
                 parent.Callback(!result);
@@ -63,222 +102,23 @@ public class Node {
                 break;
         }
     }
+
+    public void CheckIfAChildIsRunning() {
+        if (children.Count == 0 || children == null) {
+            Debug.LogError(GetNodeName() + " does not have any children and it is not a leaf!");
+            return;
+        }
+
+        for (int i = 0; i < children.Count; i++) {
+            if (children[i].IsNodeRunning()) {
+                currentChildRunning = i;
+                return;
+            }
+        }
+        currentChildRunning = 0;
+    }
+
+    void DebugMeSenpai(string debugLine) {
+        Debug.Log(debugLine);
+    }
 }
-
-//public class OldNode {
-//    public string nodeName = "";
-//    public NodeType type;
-//    public BehaviourTreeExecutor mng = null;
-//    public List<OldNode> children = new List<OldNode>();
-//    public OldNode parent = null;
-//    public string methodToExecute = "";
-
-//    public bool result = false;
-//    public float delay = 0;
-//    public int currentChildRunning = 0;
-//    public bool isRunning = false;
-//    public bool isDecorator = false;
-//    public bool debugRun = false;
-
-//    public OldNode(string nodeName) {
-//        this.nodeName = nodeName;
-//    }
-
-//    public OldNode(string nodeName, OldNode parent, BehaviourTreeExecutor mng, bool debugRun) {
-//        this.nodeName = nodeName;
-//        this.parent = parent;
-//        this.mng = mng;
-//        this.debugRun = debugRun;
-//    }
-
-//    public virtual void ParentCallback(bool childResult) {
-//        if (debugRun) {
-//            if (parent == null) {
-//                Debug.Log(nodeName + " is the top of the tree. Call back done (" + Time.timeSinceLevelLoad + ")");
-//            } else {
-//                Debug.Log(nodeName + " calls back to " + parent.nodeName + " (" + Time.timeSinceLevelLoad + ")");
-//            }
-//        }
-//        result = childResult;
-//        isRunning = false;
-//    }
-
-//    public virtual void ExecuteAction() {
-//        isRunning = true;
-//    }
-
-//    public void CheckIfAChildIsRunning() {
-//        if (children.Count == 0 || children == null) {
-//            return;
-//        }
-
-//        for (int i = 0; i < children.Count; i++) {
-//            if (children[i].isRunning) {
-//                currentChildRunning = i;
-//                return;
-//            }
-//        }
-//    }
-
-//    public void DebugMeSenpai() {
-//        Debug.Log("Name: " + nodeName + " children count: " + children.Count + " and my parent is: " + parent);
-//    }
-
-//    public virtual void DebugExecution(string debugLine) {
-//        Debug.Log(debugLine);
-//    }
-//}
-
-
-////Decorator//
-//public class Inverter : OldNode {
-//    public Inverter (string nodeName) : base (nodeName) { type = NodeType.Inverter; isDecorator = true; }
-//    public Inverter(string nodeName, OldNode parent, BehaviourTreeExecutor mng, bool debugRun) : base(nodeName, parent, mng, debugRun) { type = NodeType.Inverter; isDecorator = true; }
-
-//    public override void ParentCallback(bool childResult) {
-//        base.ParentCallback(childResult);
-//        result = !childResult;
-//        if (parent != null) {
-//            parent.ParentCallback(result);
-//        }
-//    }
-
-//    public override void ExecuteAction() {
-//        if (debugRun) {
-//            Debug.Log(nodeName + " executing child " + children[currentChildRunning].nodeName + " (" + Time.timeSinceLevelLoad + ")");
-//        }
-//        base.ExecuteAction();
-//        children[currentChildRunning].ExecuteAction();
-//    }
-//}
-
-
-////Leaf//
-//public class Leaf : OldNode {
-//    public Leaf(string nodeName) : base(nodeName) { type = NodeType.Leaf; isDecorator = false; }
-//    public Leaf(string nodeName, OldNode parent, BehaviourTreeExecutor mng, string method, bool debugRun) : base(nodeName, parent, mng, debugRun) {
-//        methodToExecute = method;
-//        type = NodeType.Leaf;
-//    }
-
-//    public override void ParentCallback(bool childResult) {
-//        base.ParentCallback(childResult);
-//        if (parent != null) {
-//            parent.ParentCallback(result);
-//        }
-//    }
-
-//    public override void ExecuteAction() {
-//        if (debugRun) {
-//            Debug.Log(nodeName + " simulating the execution of method " + methodToExecute + " (" + Time.timeSinceLevelLoad + ")");
-//        }
-//        base.ExecuteAction();
-//        mng.SetExecutingLeafReference(this);
-//        mng.behaviourActions.Invoke(methodToExecute, 0);
-//    }
-//}
-
-
-////Composite//
-//public class SelectorConcurrence : OldNode {
-//    public SelectorConcurrence(string nodeName) : base(nodeName) { type = NodeType.SelectorConcurrence; isDecorator = false; }
-//    public SelectorConcurrence(string nodeName, OldNode parent, BehaviourTreeExecutor mng, bool debugRun) : base(nodeName, parent, mng, debugRun) { type = NodeType.SelectorConcurrence; }
-
-//    public override void ParentCallback(bool childResult) {
-//        base.ParentCallback(childResult);
-//        currentChildRunning++;
-//        if (currentChildRunning == children.Count) {
-//            if (parent != null) {
-//                parent.ParentCallback(result);
-//            }
-//        } else {
-//            ExecuteAction();
-//        }
-//    }
-
-//    public override void ExecuteAction() {
-//        if (debugRun) {
-//            Debug.Log(nodeName + " executing child " + children[currentChildRunning].nodeName + " (" + Time.timeSinceLevelLoad + ")");
-//        }
-//        base.ExecuteAction();
-//        CheckIfAChildIsRunning();
-//        children[currentChildRunning].ExecuteAction();
-//    }
-//}
-
-
-////Composite//
-//public class SelectorPriority : OldNode {
-//    public SelectorPriority(string nodeName) : base(nodeName) { type = NodeType.SelectorPriority; isDecorator = false; }
-//    public SelectorPriority(string nodeName, OldNode parent, BehaviourTreeExecutor mng, bool debugRun) : base(nodeName, parent, mng, debugRun) { type = NodeType.SelectorPriority; }
-
-//    public override void ParentCallback(bool childResult) {
-//        base.ParentCallback(childResult);
-//        currentChildRunning++;
-//        if (result || currentChildRunning >= children.Count) {
-//            if (parent != null) {
-//                parent.ParentCallback(result);
-//            }
-//        } else {
-//            ExecuteAction();
-//        }
-//    }
-
-//    public override void ExecuteAction() {
-//        if (debugRun) {
-//            Debug.Log(nodeName + " executing child " + children[currentChildRunning].nodeName + " (" + Time.timeSinceLevelLoad + ")");
-//        }
-//        base.ExecuteAction();
-//        children[currentChildRunning].ExecuteAction();
-//    }
-//}
-
-
-////Composite//
-//public class Sequence : OldNode {
-//    public Sequence(string nodeName) : base(nodeName) { type = NodeType.Sequence; isDecorator = false; }
-//    public Sequence(string nodeName, OldNode parent, BehaviourTreeExecutor mng, bool debugRun) : base(nodeName, parent, mng, debugRun) { type = NodeType.Sequence; }
-
-//    public override void ParentCallback(bool childResult) {
-//        base.ParentCallback(childResult);
-//        currentChildRunning++;
-//        if (result && currentChildRunning >= children.Count) {
-//            ExecuteAction();
-//        } else {
-//            if (parent != null) {
-//                parent.ParentCallback(result);
-//            }
-//        }
-//    }
-
-//    public override void ExecuteAction() {
-//        if (debugRun) {
-//            Debug.Log(nodeName + " executing child " + children[currentChildRunning].nodeName + " (" + Time.timeSinceLevelLoad + ")");
-//        }
-//        base.ExecuteAction();
-//        CheckIfAChildIsRunning();
-//        children[currentChildRunning].ExecuteAction();
-//    }
-//}
-
-
-////Decorator//
-//public class Succeeder : OldNode {
-//    public Succeeder(string nodeName) : base(nodeName) { type = NodeType.Succeeder; isDecorator = true; }
-//    public Succeeder(string nodeName, OldNode parent, BehaviourTreeExecutor mng, bool debugRun) : base(nodeName, parent, mng, debugRun) { type = NodeType.Succeeder; isDecorator = true; }
-
-//    public override void ParentCallback(bool childResult) {
-//        result = true;
-//        if (parent != null) {
-//            parent.ParentCallback(result);
-//        }
-//    }
-
-//    public override void ExecuteAction() {
-//        if (debugRun) {
-//            Debug.Log(nodeName + " executing child " + children[currentChildRunning].nodeName + " (" + Time.timeSinceLevelLoad + ")");
-//        }
-//        base.ExecuteAction();
-//        children[currentChildRunning].ExecuteAction();
-//    }
-//}
