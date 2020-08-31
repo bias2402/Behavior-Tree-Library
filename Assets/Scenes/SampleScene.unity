@@ -330,15 +330,11 @@ MonoBehaviour:
   debugExecution: 1
   nodes: []
   leafMethods:
-  - leafName: Node 5
+  - leafName: Node 1
     leafMethod:
       m_PersistentCalls:
         m_Calls: []
-  - leafName: Node 3
-    leafMethod:
-      m_PersistentCalls:
-        m_Calls: []
-  - leafName: Node 4
+  - leafName: Node 2
     leafMethod:
       m_PersistentCalls:
         m_Calls: []

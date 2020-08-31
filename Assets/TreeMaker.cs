@@ -1,11 +1,8 @@
 ﻿//Developed by Tobias Oliver Jensen, Game Development & Learning Technology master student at the University of Southern Denmark, 2020
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Events;
-using System.Linq;
 
 public enum NodeTypes { Inverter, Leaf, None, Selector, Sequence, Succeeder }
 public class TreeMaker : EditorWindow {
@@ -17,7 +14,7 @@ public class TreeMaker : EditorWindow {
 	public Texture succeeder = null; 
 	public Texture delete = null;
 
-	private List<TreeNode> treeNodes = new List<TreeNode>();
+	private List<Node> nodes = new List<Node>();
 	private List<NodeConnection> nodeConnections = new List<NodeConnection>();
 	private Rect dropTargetRect = new Rect(10.0f, 10.0f, 30.0f, 30.0f);
 	private float[] rectSize = { 80, 30 };
@@ -27,18 +24,19 @@ public class TreeMaker : EditorWindow {
 	private bool draggingAll = false;
 	private Vector2 draggingAllStart = Vector2.zero;
 	private Vector2 draggingAllCurrent = Vector2.zero;
-	private TreeNode treeRoot = null;
+	private Node treeRoot = null;
 
 	[Header("Node informations")]
-	private TreeNode selectedNode = null;
+	private Node selectedNode = null;
 	private string nodeName = "";
-	private string leafMethod = "";
 	private NodeTypes nodeType = NodeTypes.Selector;
 
 	[Header("Tree Options")]
 	private string treeName = "";
 	private string error = "";
 	private bool isTreeNameInUse = false;
+	private TreeObject loadedTree = null;
+	private bool isTreeLoaded = false;
 
 	[MenuItem("Window/Tree Maker")]
 	public static void Launch() {
@@ -46,7 +44,7 @@ public class TreeMaker : EditorWindow {
 	}
 
 	void OnInspectorUpdate() {
-		Repaint();
+		Repaint();																							//This repaints the UI to update changes
 	}
 
 	public void PassNodeInformation(string nodeName, NodeTypes nodeType) {
@@ -55,58 +53,104 @@ public class TreeMaker : EditorWindow {
 	}
 
 	void NodeEditPanel() {
-		Rect topRect = new Rect(0, 0, 200, position.height);
-		GUILayout.BeginArea(topRect, GUI.skin.GetStyle("Box"));
-		if (GUILayout.Button("Reset Root Position")) {
-			treeNodes[0].Position = new Vector2(position.width / 2, 50);
+		Rect topRect = new Rect(0, 0, 200, position.height);												//Define the rect for this window
+		GUILayout.BeginArea(topRect, GUI.skin.GetStyle("Box"));												//This is used to make an area that can be drawn by the editor GUI drawer
+		if (GUILayout.Button("Reset Root Position")) {														//If the button is clicked, reset the root node's position
+			nodes[0].pos = new Vector2(position.width / 2, 50);
 		}
-		if (GUILayout.Button("Add Node")) {                                                                     //If the button is clicked, add a new object to the window and the list
-			treeNodes.Add(new TreeNode("Node " + (treeNodes.Count), rectSize, new Vector2(210, 50), this));
+		if (GUILayout.Button("Add Node")) {                                                                 //If the button is clicked, add a new object to the window and the list
+			nodes.Add(new Node("Node " + (nodes.Count), rectSize, new Vector2(210, 50), this));
 		}
-		EditorGUI.BeginChangeCheck();
-		GUILayout.Label("Node name:");
-		nodeName = EditorGUILayout.TextField(nodeName);
+		EditorGUI.BeginChangeCheck();																		//This is used to check for updates in the text fields
+		GUILayout.Label("Node name:");																		
+		nodeName = EditorGUILayout.TextField(nodeName);														//Read and set the string during edits
 		GUILayout.Label("Node type:");
-		nodeType = (NodeTypes)EditorGUILayout.EnumPopup(nodeType);
-		if (EditorGUI.EndChangeCheck()) {
+		nodeType = (NodeTypes)EditorGUILayout.EnumPopup(nodeType);											//Make a dropdown based on the NodeTypes enum
+		if (EditorGUI.EndChangeCheck()) {																	//If changes happened, update the information in the currently selected node
 			selectedNode.SetName(nodeName);
 			selectedNode.SetNodeType(nodeType);
 		}
-		GUILayout.EndArea();
+		GUILayout.EndArea();                                                                                //Tell the editor to stop drawing here
 
-		Rect bottomRect = new Rect(0, position.height - 90, 200, position.height);
-		GUILayout.BeginArea(bottomRect, GUI.skin.GetStyle("Box"));
-		GUILayout.Label("Tree name:");
-		treeName = EditorGUILayout.TextField(treeName);
-		error = "";
-		isTreeNameInUse = false;
-		foreach (string guid in AssetDatabase.FindAssets(treeName, new[] { "Assets/Trees" })) {
-			string temp = AssetDatabase.GUIDToAssetPath(guid);
-			temp = temp.Substring(13, temp.Length - 13);
-			temp = temp.Substring(0, temp.Length - 6);
-
-			if (treeName.Equals(temp)) {
-				error = "Name already in use!";
-				isTreeNameInUse = true;
-				break;
-			}
+		Rect bottomRect = new Rect();																		//New rect that is at the bottom of the previous
+		if (loadedTree == null) {
+			bottomRect = new Rect(0, position.height - 120, 200, position.height);
+		} else {
+			bottomRect = new Rect(0, position.height - 60, 200, position.height);
 		}
-		GUILayout.Label(error);
-		if (GUILayout.Button("Create Tree Object")) {
-			CreateBehaviorTreeObject();
+		GUILayout.BeginArea(bottomRect, GUI.skin.GetStyle("Box"));
+		loadedTree = (TreeObject)EditorGUILayout.ObjectField(loadedTree, typeof(TreeObject), true);			//Draw an objectfield to pass a ScriptableObject of type TreeObject
+		if (loadedTree == null) {                                                                           //If a tree object hasn't been loaded, draw the UI for making one
+			if (isTreeLoaded) {
+				isTreeLoaded = false;
+			}
+			GUILayout.Label("Tree name:");
+			treeName = EditorGUILayout.TextField(treeName);
+			error = "";
+			isTreeNameInUse = false;
+			foreach (string guid in AssetDatabase.FindAssets(treeName, new[] { "Assets/Trees" })) {             //Go through all assets at the given location (the string)
+				string temp = AssetDatabase.GUIDToAssetPath(guid);                                                  //Translate from GUID to string
+				temp = temp.Substring(13, temp.Length - 13);                                                        //Hardcoded substring
+				temp = temp.Substring(0, temp.Length - 6);                                                          //Hardcoded substring
+																													//The final substring is the asset's name without location and extension
+
+				if (treeName.Equals(temp)) {                                                                        //Check if the currently entered name equals the asset's name												
+					error = "Name already in use!";
+					isTreeNameInUse = true;
+					break;
+				}
+			}
+			GUILayout.Label(error);
+			if (GUILayout.Button("Create Tree Object")) {                                                       //If the button is clicked, call the method to create a new ScriptableObject asset
+				CreateBehaviorTreeObject();
+			}
+		} else {																							//If a tree object has been loaded, draw the UI for saving and updating it
+			if (!isTreeLoaded) {
+				if (isTreeNameInUse) {
+					SaveTreeChanges();
+				}
+				isTreeLoaded = true;
+				nodes.Clear();
+				foreach (Node n in loadedTree.nodes) {																//Foreach node in the tree object, create a new node for the tree maker
+					nodes.Add(new Node(n.GetNodeName(), rectSize, n.pos, this));
+				}
+
+				for (int i = 0; i < loadedTree.nodes.Count; i++) {
+					nodes[i].ParseLoadedInformation(loadedTree.nodes[i].GetNodeName(), loadedTree.nodes[i].GetNodeType(), 
+						loadedTree.nodes[i].size, loadedTree.nodes[i].isRoot, this);                                    //Parse information about the tree object node to the new tree maker node
+					List<Node> children = loadedTree.nodes[i].GetChildren();
+					foreach (Node n in children) {																		//Go through the tree object node's children
+						nodes[i].AddChild(nodes[n.listIndex]);																//Add child to the new node with the same index as the tree object node
+					}
+					if (loadedTree.nodes[i].GetParent() != null) {
+						nodes[i].SetParent(nodes[loadedTree.nodes[i].GetParent().listIndex]);                               //Set parent for the new node to the index of the tree object node's parent
+					}
+				}
+
+				nodeConnections.Clear();
+				for (int i = 0; i < loadedTree.nodeConnections.Count; i++) {                                        //Foreach connection in the tree object, create a new connection for the tree maker
+					new NodeConnection(nodes[loadedTree.nodeConnections[i].GetChild().listIndex],
+						nodes[loadedTree.nodeConnections[i].GetParent().listIndex], this, true);
+				}
+
+				if (currentConnection != null) currentConnection.DeleteConnection(true);							//Ensure that current connection is purged
+			}
+			if (GUILayout.Button("Save changes to Tree")) {														//If the button is clicked, call the method to save changes to the tree object
+				SaveTreeChanges();
+			}
 		}
 		GUILayout.EndArea();
 	}
 
 	public void OnGUI() {
 		if (treeRoot == null) {
-			treeNodes.Add(treeRoot = new TreeNode("Root", rectSize, new Vector2(position.width / 2, 50), this));
-			treeNodes[0].MakeRoot();
-			treeNodes[0].SetTypeToRoot();
+			nodes.Add(treeRoot = new Node("Root", rectSize, new Vector2(position.width / 2, 50), this));
+			nodes[0].MakeRoot();
+			nodes[0].SetTypeToRoot();
 		}
 		wantsMouseMove = true;
 		NodeEditPanel();																						//Draw the edit panel
-		TreeNode toFront, dropDead;
+		Node toFront, dropDead;
 		bool previousState;
 		Color color;
 
@@ -114,68 +158,67 @@ public class TreeMaker : EditorWindow {
 
         //Drag and drop, recoloring, selecting, and stacking for all nodes
         #region
-        foreach (TreeNode n in treeNodes) {                                                          //Go through all the spawned objects
-			previousState = n.Dragging;																		//Save bool value about data being dragged last time it was checked
+        foreach (Node n in nodes) {																		//Go through all the spawned objects
+			previousState = n.isDragging;																	//Save bool value about data being dragged last time it was checked
 
 			color = GUI.color;                                                                              //Save the default color
 			if (n.isSelected) {                                                                             //Check if the node is selected
 				GUI.color = Color.yellow;                                                                       //Make n yellow
-			} else if (n.isRoot && n.Dragging) {
-				GUI.color = Color.grey;
+			} else if (n.isRoot && n.isDragging) {
+				GUI.color = Color.grey;																			//Make n grey
 			} else {
 				GUI.color = color;																				//Make n standard GUI color
 			}
 			n.OnGUI();																						//Call OnGUI on the object
 			GUI.color = color;																				//Change the color of the GUI back to the original
 
-			if (n.Dragging) {																				//If data is being dragged
+			if (n.isDragging) {																				//If n is being dragged
 				if (!n.isRoot) {
 					n.isSelected = true;
-					selectedNode = n;
-					n.ParseNodeInfoToEditPanel();
-					foreach (TreeNode otherNodes in treeNodes) {                                                        //Go through all nodes	
+					selectedNode = n;	
+					n.ParseNodeInfoToEditPanel();															//Parse the node's information to the edit panel in the GUI
+					foreach (Node otherNodes in nodes) {                                                        //Go through all nodes	
 						if (otherNodes != n) {																			
 							otherNodes.isSelected = false;
 							GUI.color = color;                                                                              //Set color of all but this node to standard GUI color
 						}
 					}
 				}
-				if (treeNodes.IndexOf(n) != treeNodes.Count - 1) {											//If the object isn't the last in the list
+				if (nodes.IndexOf(n) != nodes.Count - 1) {														//If the object isn't the last in the list
 					toFront = n;																						//Set reference for toFront to equal data
 				}
-			} else if (previousState) {																			//If data was previously dragged
-				if (dropTargetRect.Contains(Event.current.mousePosition)) {											//If the mouse is on the object
+			} else if (previousState) {																		//If n was previously dragged
+				if (dropTargetRect.Contains(Event.current.mousePosition)) {										//If the mouse is on the object
 					dropDead = n;																					//Set dropDead reference to equal data
 				}
 			}
 		}
 
-		if (toFront != null) {																				//Move an object to front by removing and adding it
-			treeNodes.Remove(toFront);
-			treeNodes.Add(toFront);
+		if (toFront != null) {																			//Move an object to front by removing and adding it
+			nodes.Remove(toFront);
+			nodes.Add(toFront);
 		}
 
-		if (dropDead != null) {																				//Destroy an object by removing it
-			treeNodes.Remove(dropDead); 
+		if (dropDead != null) {																			//Destroy an object by removing it
+			nodes.Remove(dropDead); 
 		}
 		#endregion
-
 		try {
-			foreach (NodeConnection nc in nodeConnections) {                                                    //Draw all connections
+			foreach (NodeConnection nc in nodeConnections) {                                                //Draw all connections
 				nc.OnGUI();
 			}
 		} catch {}
 
 		//Event checks
 		#region
-		if (Event.current.type == EventType.ScrollWheel) {													//Check if mouse wheel event
+		if (Event.current.type == EventType.ScrollWheel) {												//Check if mouse wheel event
 			if (Event.current.delta.y < 0) {
 				Zoom(1);
 			} else {
 				Zoom(-1);
 			}
 			Event.current.Use();
-		} else if (Event.current.type == EventType.MouseDown) {												//Check for mouse down event
+		} else if (Event.current.type == EventType.MouseDown) {											//Check for mouse down event
 			if (Event.current.button == 0) {
 				bool isHoveringConnection = false;
 				foreach (NodeConnection nc in nodeConnections) {
@@ -185,11 +228,11 @@ public class TreeMaker : EditorWindow {
 					}
 				}
 				if (!isHoveringConnection) {
-					draggingAll = true;                                                                                 //Set to true
-					draggingAllStart = Event.current.mousePosition;                                                     //Save current mouse position as start position
-					draggingAllCurrent = Event.current.mousePosition;                                                   //Save current mouse position
-					foreach (TreeNode to in treeNodes) {                                                                    //Go through all tree objects
-						to.SetDraggingAll(true);                                                                            //Call SetDraggingAll with parameter true
+					draggingAll = true;																				//Set to true
+					draggingAllStart = Event.current.mousePosition;                                                 //Save current mouse position as start position
+					draggingAllCurrent = Event.current.mousePosition;                                               //Save current mouse position
+					foreach (Node to in nodes) {                                                                    //Go through all tree objects
+						to.SetDraggingAll(true);                                                                        //Call SetDraggingAll with parameter true
 					}
 				}
 			} else if (Event.current.button == 1) {
@@ -201,18 +244,18 @@ public class TreeMaker : EditorWindow {
 			Event.current.Use();																				//Trigger the event to use it
 		} else if (Event.current.type == EventType.MouseUp) {												//Check for mouse up event
 			draggingAll = false;																				//Set to false
-			foreach (TreeNode to in treeNodes) {																	//Go through all tree objects
+			foreach (Node to in nodes) {																		//Go through all tree objects
 				to.SetDraggingAll(false);																			//Call SetDraggingAll with parameter false
 			}
 			Event.current.Use();                                                                                //Trigger the event to use it
 		} else if (Event.current.type == EventType.MouseDrag) {												//Check for mouse drag (mouse down + mouse move) event
 			draggingAllCurrent = Event.current.mousePosition;													//Update with current mouse position
 			Event.current.Use();                                                                                //Trigger the event to use it
-		} else if (Event.current.type == EventType.MouseMove) {
-			mousePos = Event.current.mousePosition;
+		} else if (Event.current.type == EventType.MouseMove) {												//Check if mouse moved
+			mousePos = Event.current.mousePosition;																//Update the mousePos based on mouse position
 		}
 		if (draggingAll) {																					//If draggingAll is true
-			foreach (TreeNode to in treeNodes) {															//Go through all tree objects
+			foreach (Node to in nodes) {																		//Go through all tree objects
 				to.DraggingAllSetPosition(draggingAllStart - draggingAllCurrent);									//Call DraggingAllSetPosition with parameter of the calculated delta for mouse movement
 			}
 		}
@@ -247,7 +290,7 @@ public class TreeMaker : EditorWindow {
 			rectSize[1] = 80;                                                                                   //Set height 80
 		}
 
-		foreach (TreeNode tn in treeNodes) {                                                             //Go through all tree objects
+		foreach (Node tn in nodes) {                                                             //Go through all tree objects
 			tn.ChangeSize(rectSize);                                                                            //Call ChangeSize with parameter rectSize
 		}
 	}
@@ -260,7 +303,7 @@ public class TreeMaker : EditorWindow {
 		if (nodeConnections.Count - 1 <= index) nodeConnections.RemoveAt(index);
 	}
 
-	public void FindImproperConnections(TreeNode nodeToCheckAgainst, bool isParent) {
+	public void FindImproperConnections(Node nodeToCheckAgainst, bool isParent) {
 		int connectionToRemove = -1;
 		nodeConnections.ForEach(n => { if (n.GetParent() == nodeToCheckAgainst) connectionToRemove = GetConnectionIndex(n); });
 		Debug.Log(nodeConnections.Count);
@@ -278,404 +321,45 @@ public class TreeMaker : EditorWindow {
 		return 0;
 	}
 
-	int GetTreeNodesIndexInList(TreeNode tn) {
-		for(int i = 0; i < treeNodes.Count; i++) {
-			if (treeNodes[i] == tn) {
-				return i;
-			}
-		}
-		return -1;
-	}
-
 	void CreateBehaviorTreeObject() {
-		if (isTreeNameInUse) {
+		if (isTreeNameInUse) {																				
 			Debug.LogError("Name already in use!");
 			return;
 		}
 		if (treeName.Equals(string.Empty)) {
-			Debug.LogError("No name entered");
+			Debug.LogError("No name entered!");
 			return;
 		}
-		TreeObject behaviorTree = CreateInstance<TreeObject>();
-		behaviorTree.name = treeName;
-		behaviorTree.nodeConnections = nodeConnections;
-		behaviorTree.treeNodes = treeNodes;
-		List<Node> nodes = new List<Node>();
-		List<TreeNode> treeNodesForSetup = new List<TreeNode>();
-		foreach (TreeNode treeNode in treeNodes) {
-			if (treeNode.IsConnectedToRoot()) {
-				nodes.Add(new Node(treeNode.name, treeNode.GetNodeType()));
-				treeNodesForSetup.Add(treeNode);
+		TreeObject behaviorTree = CreateInstance<TreeObject>();												//Create a new instance of the scriptable object TreeObject
+		behaviorTree.name = treeName;																		//Set the object's name
+		behaviorTree.nodeConnections = nodeConnections;														//Add the current node connections to the object
+
+		List<Node> rootedNodes = new List<Node>();
+		int index = 0;
+		foreach (Node n in nodes) {																			//Go through all the nodes 
+			if (n.IsConnectedToRoot()) {																		//Ensure that the node is connected to the root (otherwise we don't want it in the final tree)
+				rootedNodes.Add(n);																				
+				n.listIndex = index;
+				index++;
 			}
 		}
-		behaviorTree.nodes = new List<Node>(nodes);
-
-		for (int i = 0; i < nodes.Count; i++) {
-			if (nodes[i].GetNodeType() == NodeTypes.Leaf) continue;
-
-			List<TreeNode> children = new List<TreeNode>(treeNodes[i].GetChildren());
-			if (children.Count == 0) continue;
-
-			for (int j = 0; j < children.Count; j++) {
-				for (int k = 0; k < nodes.Count; k++) {
-					if (children[j].GetNodeName() == nodes[k].GetNodeName()) {
-						nodes[i].AddChild(nodes[k]);
-						break;
-					}
-				}
-			}
-		}
+		behaviorTree.nodes = rootedNodes;																	//Add the viable nodes to the object
 
 		int leafCount = 0;
-		foreach (Node n in nodes) {
+		foreach (Node n in rootedNodes) {																	//Go through all viable nodes and find the number of leaves (leaf nodes)
 			if (n.GetNodeType() == NodeTypes.Leaf) {
 				leafCount++;
 			}
 		}
-		behaviorTree.leafCount = leafCount;
+		behaviorTree.leafCount = leafCount;																	//Add the leafCount to the object
 
-		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");
-		AssetDatabase.SaveAssets();
+		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");			//Create a asset in the folder with the user-entered name
+		AssetDatabase.SaveAssets();																			//Save assets to write the new asset to the disk
+	}
+
+	void SaveTreeChanges() {
+		isTreeLoaded = false;
+		Debug.Log("Here");
 	}
 }
-
-public class GUIDraggableObject {
-	protected Vector2 pos;
-	public Vector2 dragStart;
-	private bool isDragging;
-	private bool isDraggingAll = false;
-	private Vector2 draggingAllStart = Vector2.zero;
-
-	public GUIDraggableObject(Vector2 position) {
-		pos = position;
-	}
-
-	public bool Dragging {																									//Get Dragging
-		get {
-			return isDragging;
-		}
-	}
-
-	public Vector2 Position {																								//Get or Set Position
-		get {
-			return pos;
-		}
-		set {
-			pos = value;
-		}
-	}
-
-	public void Drag(Rect draggingRect) {																					
-		if (Event.current.type == EventType.MouseUp) {																		//If mouse (left) is up
-			isDragging = false;																									//Not dragging
-		} else if (Event.current.type == EventType.MouseDown && draggingRect.Contains(Event.current.mousePosition)) {		//If mouse (left) is down and inside object
-			isDragging = true;																									//Is dragging
-			dragStart = Event.current.mousePosition - pos;																		//Set dragStart to current mouse position minus object position
-			Event.current.Use();																								//Trigger the event
-		}
-
-		if (isDragging && !isDraggingAll) {																					//If only this object is being dragged
-			Vector2 newPos = Event.current.mousePosition - dragStart;															//Update position to current mouse position minus start position
-			//newPos.x += SnapAxisValue(newPos.x);
-			//newPos.y += SnapAxisValue(newPos.y);
-			//Debug.Log(newPos);
-			pos = newPos;
-		}
-	}
-
-	//Snap using mouse pos. When mouse is more than 2.5 away, move and update dragStart for new snap start point
-	float SnapAxisValue(float value) {
-		int offset = (Mathf.Round(value) % 5) >= 3 ? 5 : 0;
-		return (value % 5) * offset; 
-	}
-
-	public void SetDraggingAll(bool dragAll) {
-		isDraggingAll = dragAll;																			//Set to the value of dragAll
-		if (dragAll) draggingAllStart = Position;															//If dragAll is true, set current position as start position
-	}
-
-	public void DraggingAllSetPosition(Vector2 newPos) {
-		Position = draggingAllStart - newPos;																//Set position to start position minus the recieved delta movement for mouse
-	}
-}
-
-[Serializable]
-public class TreeNode : GUIDraggableObject {
-	private TreeMaker treeMaker = null;
-	public bool isRoot { get; internal set; } = false;
-	[SerializeField] public string name { get; internal set; }
-	private float[] size;
-	public Vector3 childConnectionPoint = Vector3.zero;
-	public Vector3 parentConnectionPoint = Vector3.zero;
-	private TreeNode parent = null;
-	[SerializeReference] private List<TreeNode> children = new List<TreeNode>(); 
-	public bool isSelected = false;
-	private NodeTypes nodeType = NodeTypes.Selector;
-
-	public TreeNode(string name, float[] size, Vector2 position, TreeMaker treeMaker) : base(position) {
-		this.name = name;
-		this.size = size;
-		this.treeMaker = treeMaker;
-	}
-
-	public void OnGUI() {
-		Rect drawRect = new Rect(pos.x, pos.y, size[0], size[1]);													//Draw a rect
-
-		GUILayout.BeginArea(drawRect, GUI.skin.GetStyle("Box"));													//Begin GUILayout block
-		GUILayout.Label(name, GUI.skin.GetStyle("Box"), GUILayout.ExpandWidth(true));                               //Make a label with the Node's name
-		GUILayout.EndArea();                                                                                        //End GUILayout block
-
-		Rect setParentButton = new Rect(drawRect.width / 2, 0, 10, 10);												//Make the rect for the parentButton
-		Rect addChildButton = new Rect(drawRect.width / 2, drawRect.height, 10, 10);								//Make the rect for the childButton
-
-		childConnectionPoint = drawRect.position + addChildButton.position;											//Calculate the position for the children to connect to
-		parentConnectionPoint = drawRect.position + setParentButton.position;                                       //Calculate the position for the parent to connect to
-
-		//This region controls the drawing of the node
-        #region
-        GUILayout.BeginArea(new Rect(pos.x - 5, pos.y - 5, size[0] + 10, size[1] + 10));							//Create a new box around the node that is a bit larger
-		if (!isRoot) {																								//Check if node is the root node
-			//This button is for setting the parent node of the current connection aka setting this node as a child! It's confusing, I know.
-			if (GUI.Button(setParentButton, "")) {																			//Add a new button for connecting a parent to the node
-				if (treeMaker.currentConnection == null) {                                                                  //Check if a connection is currently acive
-					if (parent == null) {																						//Check that node doesn't have a parent yet
-						new NodeConnection(this, null, treeMaker);                                                                  //Create a new connection, setting this node as the child
-					} else {
-						Debug.LogWarning("A node can only ever have one parent!");
-					}
-				} else {
-					if (!treeMaker.currentConnection.GotChild()) {																//Check if the current connection have a child node
-						if (parent == null) {                                                                                       //Check if the node's parent is null
-							if (treeMaker.currentConnection.GetParent() != this) {                                                      //Check that the current connection's parent node isn't this node
-								treeMaker.currentConnection.FinishConnection(this);                                                     //Finish the connection
-							} else {
-								Debug.LogWarning("A node can't connect to itself!");
-							}
-						} else {
-							Debug.LogWarning("A node can only ever have one parent!");
-						}
-					} else {
-						Debug.LogWarning("The connection already got a parent node set!");
-					}
-				}
-			}
-		}
-		if (nodeType != NodeTypes.Leaf) {
-			//This button is for setting the child node of the current connection aka setting this node as a parent! It's confusing, I know.
-			if (GUI.Button(addChildButton, "")) {                                                                           //Add a new button for connecting a child to the node
-				if ((nodeType == NodeTypes.Inverter && children.Count >= 1) || (nodeType == NodeTypes.Succeeder && children.Count >= 1)) {
-					Debug.LogWarning("A decorater can only have one child!");
-				} else {
-					if (treeMaker.currentConnection == null) {                                                                  //Check if a connection is currently acive
-						new NodeConnection(null, this, treeMaker);                                                                  //Create a new connection, setting this node as the parent
-					} else {
-						if (!treeMaker.currentConnection.GotParent()) {                                                             //Check if the current connections have a parent node
-							if (treeMaker.currentConnection.GetChild() != this) {                                                       //Check that the current connection's child node isn't this node
-								treeMaker.currentConnection.FinishConnection(this);                                                         //Finish the connection
-							} else {
-								Debug.LogWarning("A node can't connect to itself!");
-							}
-						} else {
-							Debug.LogWarning("The connection already got a child node set! " + treeMaker.currentConnection.GetChild());
-							Debug.LogWarning(children.Count);
-						}
-					}
-				}
-			}
-		}
-		
-		if (!isRoot) {
-			if (size[0] > 100) {
-				switch (nodeType) {
-					case NodeTypes.Inverter:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.inverter);
-						break;
-					case NodeTypes.Leaf:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.leaf);
-						break;
-					case NodeTypes.Selector:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.prioritySelector);
-						break;
-					case NodeTypes.Sequence:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.sequence);
-						break;
-					case NodeTypes.Succeeder:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.succeeder);
-						break;
-					default:
-						GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.delete);
-						break;
-				}
-			}
-		} else {
-			if (size[0] > 100) {
-				GUI.DrawTexture(new Rect(drawRect.width / 2 - 20, 25, 50, 50), treeMaker.root);
-			}
-		}
-		GUILayout.EndArea();
-        #endregion
-
-        if (nodeType == NodeTypes.Inverter || nodeType == NodeTypes.Succeeder) {
-			if (children.Count > 1) {
-				int iterations = children.Count;
-				for (int i = 1; i < iterations; i++) {
-					treeMaker.FindImproperConnections(this, true);
-					if (children.Count > 1) children.RemoveAt(1);
-				}
-			}
-		}
-		if (nodeType == NodeTypes.Leaf && children.Count != 0) {
-			children.Clear();
-			treeMaker.FindImproperConnections(this, true);
-		}
-		Drag(drawRect);																								//Drag the rect
-	}
-
-	public bool IsConnectedToRoot() {
-		if (isRoot) return true;
-		else if (GetParent() != null) return GetParent().IsConnectedToRoot();
-		else return false;
-	}
-
-	public void MakeRoot() => isRoot = true;
-
-	public void SetTypeToRoot() => nodeType = NodeTypes.Selector;
-
-	public void ChangeSize(float[] newSize) => size = newSize;
-
-	public void SetName(string name) {
-		this.name = name;
-		OnGUI();
-	}
-
-	public string GetNodeName() {
-		return name;
-	}
-
-	public void SetParent(TreeNode parent) => this.parent = parent;
-
-	public void AddChild(TreeNode child) => children.Add(child);
-
-	public void RemoveChild(TreeNode child) {
-		int index = -1;
-		for (int i = 0; i < children.Count; i++) {
-			if (children[i] == child) {
-				index = i;
-				break;
-			}
-		}
-		if (index == -1) return;
-		children.RemoveAt(index);
-	}
-
-	public List<TreeNode> GetChildren() {
-		return children;
-	}
-
-	public TreeNode GetParent() {
-		return parent;
-	}
-
-	public NodeTypes GetNodeType() {
-		return nodeType;
-	}
-
-	public void SetNodeType(NodeTypes type) => nodeType = type;
-
-	public void ParseNodeInfoToEditPanel() => treeMaker.PassNodeInformation(name, nodeType);
-}
-
-[Serializable]
-public class NodeConnection {
-	public Rect connectionRect { get; internal set; }
-	private TreeMaker treeMaker = null;
-	private TreeNode childNode = null;
-	private TreeNode parentNode = null;
-	private Vector3 childPoint = Vector3.zero;
-	private Vector3 parentPoint = Vector3.zero;
-	private bool isDeleting = false;
-
-	public NodeConnection(TreeNode child, TreeNode parent, TreeMaker treeMaker) {
-		if (child == null && parent == null) {
-			Debug.LogError("No start nor end node was given! Connection not created!");
-			return;
-		}
-		if (child != null) {
-			childNode = child;
-			childPoint = child.parentConnectionPoint;
-		}
-		if (parent != null) {
-			parentNode = parent;
-			parentPoint = parent.childConnectionPoint;
-		}
-		treeMaker.SetCurrentConnection(this);
-		treeMaker.AddNodeConnection(this);
-		this.treeMaker = treeMaker;
-	}
-
-	public void OnGUI() {
-		if (isDeleting) return;
-		if (childNode == null && parentNode == null) {
-			Debug.LogError("No start nor end node!");
-			return;
-		}
-		childPoint = childNode != null ? childNode.parentConnectionPoint : treeMaker.mousePos;
-		parentPoint = parentNode != null ? parentNode.childConnectionPoint : treeMaker.mousePos;
-		Handles.DrawLine(childPoint, parentPoint);
-
-		if (parentNode != null && childNode != null) {
-			Vector2 size = new Vector2(15, 15);
-			Vector2 pos = ((parentPoint + childPoint) / 2) - new Vector3(size.x / 2, size.y / 2, 0);
-			Rect drawRect = new Rect(pos, size);
-			connectionRect = drawRect;
-			GUILayout.BeginArea(drawRect);
-			Rect btnRect = new Rect(0, 0, drawRect.width, drawRect.height);
-			if (GUI.Button(btnRect, treeMaker.delete)) {
-				DeleteConnection(false);
-			}
-			GUILayout.EndArea();
-		}
-	}
-
-	public bool IsFullyConnected() {
-		return childNode == null || parentNode == null ? false : true;
-	}
-
-	public void FinishConnection(TreeNode n) {
-		if (parentNode == null) {
-			parentNode = n;
-			childNode.SetParent(parentNode);
-			parentNode.AddChild(childNode);
-		} else {
-			childNode = n;
-			parentNode.AddChild(childNode);
-			childNode.SetParent(parentNode);
-		}
-		treeMaker.SetCurrentConnection(null);
-	}
-
-	public bool GotChild() {
-		return childNode == null ? false : true;
-	}
-
-	public bool GotParent() {
-		return parentNode == null ? false : true;
-	}
-
-	public TreeNode GetChild() {
-		return childNode;
-	}
-
-	public TreeNode GetParent() {
-		return parentNode;
-	}
-
-	public void DeleteConnection(bool isPhantom) {
-		isDeleting = true;
-		if (childNode != null) childNode.SetParent(null);
-		if (parentNode != null) parentNode.RemoveChild(childNode);
-		childNode = null;
-		parentNode = null;
-		if (!isPhantom) treeMaker.RemoveConnection(treeMaker.GetConnectionIndex(this));
-	}
-}
+ 
