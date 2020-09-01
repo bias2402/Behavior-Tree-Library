@@ -8,7 +8,7 @@ public class Node : GUIDraggableObject {
 	[SerializeReference] private Node parent = null;
 	[SerializeReference] private List<Node> children = new List<Node>();
 	[SerializeField] public string name { get; internal set; }
-	private NodeTypes nodeType = NodeTypes.Selector;
+	private NodeTypes nodeType = NodeTypes.Leaf;
 	private bool isRunning = false;
 	private int currentChildRunning = 0;
 	private LeafMethod leafMethod = null;
@@ -38,7 +38,7 @@ public class Node : GUIDraggableObject {
 		Rect drawRect = new Rect(pos.x, pos.y, size[0], size[1]);                                           //Draw a rect
 
 		GUILayout.BeginArea(drawRect, GUI.skin.GetStyle("Box"));                                            //Begin GUILayout block
-		GUILayout.Label(name, GUI.skin.GetStyle("Box"), GUILayout.ExpandWidth(true));                       //Make a label with the Node's name
+		GUILayout.Label(name, GUI.skin.GetStyle("Box"), GUILayout.ExpandWidth(true));                       //Make a label with the node's name that can expand horizontally
 		GUILayout.EndArea();                                                                                //End GUILayout block
 
 		Rect setParentButton = new Rect(drawRect.width / 2, 0, 10, 10);                                     //Make the rect for the parentButton
@@ -136,14 +136,14 @@ public class Node : GUIDraggableObject {
 			if (children.Count > 1) {
 				int iterations = children.Count;
 				for (int i = 1; i < iterations; i++) {
-					treeMaker.FindImproperConnections(this, true);
+					treeMaker.FindImproperConnections(this);
 					if (children.Count > 1) children.RemoveAt(1);
 				}
 			}
 		}
 		if (nodeType == NodeTypes.Leaf && children.Count != 0) {
 			children.Clear();
-			treeMaker.FindImproperConnections(this, true);
+			treeMaker.FindImproperConnections(this);
 		}
 		Drag(drawRect);                                                                                             //Drag the rect
 	}
@@ -159,6 +159,30 @@ public class Node : GUIDraggableObject {
 	public void SetTypeToRoot() => nodeType = NodeTypes.Selector;
 
 	public void ChangeSize(float[] newSize) => size = newSize;
+
+	public void RepositionForZoom(Node root) {
+		float x = 25;
+		float y = 55;
+		Vector2 offset = Vector2.zero;
+		if (!isRoot) {
+			if (size[0] >= 100) {
+				if (pos.x < root.pos.x) {
+					offset.x -= x;
+				} else {
+					offset.x += x;
+				}
+				offset.y += y;
+			} else {
+				if (pos.x < root.pos.x) {
+					offset.x += x;
+				} else {
+					offset.x -= x;
+				}
+				offset.y -= y;
+			}
+		} else offset.y = 0;
+		pos += offset;
+	}
 
 	public void SetName(string name) {
 		this.name = name;
@@ -233,7 +257,7 @@ public class Node : GUIDraggableObject {
 		isRunning = true;
 		switch (nodeType) {																					//Based on the node type, execute the step in the tree
 			case NodeTypes.Leaf:
-				leafMethod.Execute();																				//Call the Execute method for the connected event
+				leafMethod.Execute();                                                                               //Call the Execute method for the connected event
 				break;
 			case NodeTypes.Selector:
 			case NodeTypes.Sequence:

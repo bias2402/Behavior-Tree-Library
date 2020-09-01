@@ -7,40 +7,30 @@ using UnityEngine.Events;
 [Serializable]
 public class TreeHandler : MonoBehaviour {
     [SerializeField] private TreeObject tree = null;
-    [Tooltip("This delay is in seconds!")]
-    [SerializeField] private float executionDelay = 0;
     [Space]
     [Tooltip("Toggle this to log the tree execution to the console. This will spam the console A LOT and should be toggled off in any release!")]
     [SerializeField] private bool debugExecution = false;
 
     [Header("Leaf Actions")]
-    [SerializeReference] private List<Node> nodes = new List<Node>();
-    [SerializeField] [ReadOnly] private LeafMethod[] leafMethods = null;
-
-    private float timeSinceLastExecution = 0;
+    private List<Node> nodes = new List<Node>();
+    [SerializeField] private List<LeafMethod> leafMethods = null;
     private List<Node> leaves = new List<Node>();
 
     //This method runs when the editor compiles or a variable in a component of this type is changed through the inspector
     private void OnValidate() {
         if (tree != null) {                                                                                 //If the tree ScriptableObject is added to the object
-            leafMethods = new LeafMethod[tree.leafCount];                                                       //Make a new array with the length of leafCount read from the tree object
-            int index = 0;
-            foreach(Node n in tree.nodes) {                                                                     //Go through all nodes and find the leaves
-                if (n.GetNodeType() == NodeTypes.Leaf) {
-                    leafMethods[index] = new LeafMethod(n.GetNodeName());                                               //Create a new LeafMethod for each leaf node and pass the node's name to it
-                    index++;
+            if (leafMethods.Count != tree.leafCount) {                                                          //Check that the list is the correct size
+                leafMethods.Clear();
+                foreach (Node n in tree.nodes) {                                                                     //Go through all nodes and find the leaves
+                    if (n.GetNodeType() == NodeTypes.Leaf) {
+                        leafMethods.Add(new LeafMethod(n.GetNodeName()));                                                   //Create a new LeafMethod for each leaf node and pass the node's name to it
+                    }
                 }
             }
         }
-
-        if (executionDelay < 0) executionDelay = 0;
     }
 
-    void Start() {
-        InitTree();
-    }
-
-    void InitTree() {
+    public void InitTree() {
         foreach (Node n in tree.nodes) {                                                                    //Foreach node in the tree object, create a new node for execution
             nodes.Add(new Node(n.GetNodeName(), n.GetNodeType()));
         }
@@ -52,9 +42,8 @@ public class TreeHandler : MonoBehaviour {
             }
         }
         for (int i = 0; i < nodes.Count; i++) {                                                             //Compare execution nodes and tree object nodes to find and set parents and children
-            if (tree.nodes[i].GetParent() != null) {
-                nodes[i].SetParent(nodes[tree.nodes[i].GetParent().listIndex]);
-            }
+            if (tree.nodes[i].GetParent() != null) nodes[i].SetParent(nodes[tree.nodes[i].GetParent().listIndex]);
+
             List<Node> nodeChildren = new List<Node>(tree.nodes[i].GetChildren());
             if (nodeChildren != null && nodeChildren.Count > 0) {
                 foreach (Node n in nodeChildren) {
@@ -73,24 +62,11 @@ public class TreeHandler : MonoBehaviour {
         return null;
     }
 
-    void Update() {
-        if (Input.GetKeyDown(KeyCode.Space)) {
-            if (executionDelay > 0) {
-                timeSinceLastExecution += Time.deltaTime;
-                if (timeSinceLastExecution >= executionDelay) {
-                    timeSinceLastExecution = 0;
-                    nodes[0].Execute();
-                }
-            } else {
-                nodes[0].Execute();
-            }
-        }
-        if (Input.GetKeyDown(KeyCode.C)) {
-            LeafCallback(true);
-        }
+    public void Execute() {
+        nodes[0].Execute();
     }
 
-    public void LeafCallback(bool result) {                                                             //This method is supposed to be called whenever a leaf completes its task in another script
+    public void Callback(bool result) {                                                             //This method is supposed to be called whenever a leaf completes its task in another script
         foreach (Node l in leaves) {                                                                        //Iterate the leaves and find the currently running leaf to call its callback function with result
             if (l.IsNodeRunning()) {                                                                            
                 l.Callback(result);
@@ -103,6 +79,8 @@ public class TreeHandler : MonoBehaviour {
     public bool GetDebugState() {
         return debugExecution;
     }
+
+
 }
 
 [Serializable]

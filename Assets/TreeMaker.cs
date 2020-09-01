@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-public enum NodeTypes { Inverter, Leaf, None, Selector, Sequence, Succeeder }
+public enum NodeTypes { Inverter, Leaf, Selector, Sequence, Succeeder }
 public class TreeMaker : EditorWindow {
 	public Texture inverter = null;
 	public Texture leaf = null;
@@ -25,6 +25,7 @@ public class TreeMaker : EditorWindow {
 	private Vector2 draggingAllStart = Vector2.zero;
 	private Vector2 draggingAllCurrent = Vector2.zero;
 	private Node treeRoot = null;
+	private bool isZoomed = false;
 
 	[Header("Node informations")]
 	private Node selectedNode = null;
@@ -53,26 +54,51 @@ public class TreeMaker : EditorWindow {
 	}
 
 	void NodeEditPanel() {
-		Rect topRect = new Rect(0, 0, 200, position.height);												//Define the rect for this window
+		//This region is the basics of the edit panel
+        #region
+        Rect topRect = new Rect(0, 0, 200, position.height);												//Define the rect for this window
 		GUILayout.BeginArea(topRect, GUI.skin.GetStyle("Box"));												//This is used to make an area that can be drawn by the editor GUI drawer
+		
 		if (GUILayout.Button("Reset Root Position")) {														//If the button is clicked, reset the root node's position
 			nodes[0].pos = new Vector2(position.width / 2, 50);
 		}
+
 		if (GUILayout.Button("Add Node")) {                                                                 //If the button is clicked, add a new object to the window and the list
 			nodes.Add(new Node("Node " + (nodes.Count), rectSize, new Vector2(210, 50), this));
 		}
+
 		EditorGUI.BeginChangeCheck();																		//This is used to check for updates in the text fields
 		GUILayout.Label("Node name:");																		
 		nodeName = EditorGUILayout.TextField(nodeName);														//Read and set the string during edits
 		GUILayout.Label("Node type:");
 		nodeType = (NodeTypes)EditorGUILayout.EnumPopup(nodeType);											//Make a dropdown based on the NodeTypes enum
+
 		if (EditorGUI.EndChangeCheck()) {																	//If changes happened, update the information in the currently selected node
 			selectedNode.SetName(nodeName);
 			selectedNode.SetNodeType(nodeType);
 		}
-		GUILayout.EndArea();                                                                                //Tell the editor to stop drawing here
 
-		Rect bottomRect = new Rect();																		//New rect that is at the bottom of the previous
+		GUILayout.Label("");
+		GUILayout.Label("");
+
+		if (selectedNode != null) {																			//If a node is selected
+			if (GUILayout.Button("Delete Current Node")) {                                                      //If button is clicked, delete the selected node and connections to or from it
+				DeleteNode();
+				Debug.Log("Current node deleted");
+			}
+		}
+
+		if (GUILayout.Button("Clear Everything")) {															//If button is clicked, clear everything
+			ClearWorkSpace();
+			Debug.Log("Work space clearded");
+		}
+
+		GUILayout.EndArea();                                                                                //Tell the editor to stop drawing here
+        #endregion
+
+		//This region controls the more dynamic functions (delete nodes, clear work space, create or save trees)
+        #region
+        Rect bottomRect;																					//New rect that is at the bottom of the previous
 		if (loadedTree == null) {
 			bottomRect = new Rect(0, position.height - 120, 200, position.height);
 		} else {
@@ -82,6 +108,9 @@ public class TreeMaker : EditorWindow {
 		loadedTree = (TreeObject)EditorGUILayout.ObjectField(loadedTree, typeof(TreeObject), true);			//Draw an objectfield to pass a ScriptableObject of type TreeObject
 		if (loadedTree == null) {                                                                           //If a tree object hasn't been loaded, draw the UI for making one
 			if (isTreeLoaded) {
+				isTreeLoaded = false;
+				ClearWorkSpace();
+				loadedTree = null;
 				isTreeLoaded = false;
 			}
 			GUILayout.Label("Tree name:");
@@ -106,43 +135,49 @@ public class TreeMaker : EditorWindow {
 			}
 		} else {																							//If a tree object has been loaded, draw the UI for saving and updating it
 			if (!isTreeLoaded) {
-				if (isTreeNameInUse) {
-					SaveTreeChanges();
-				}
 				isTreeLoaded = true;
-				nodes.Clear();
-				foreach (Node n in loadedTree.nodes) {																//Foreach node in the tree object, create a new node for the tree maker
+				ClearWorkSpace();
+
+				foreach (Node n in loadedTree.nodes) {															//Foreach node in the tree object, create a new node for the tree maker
 					nodes.Add(new Node(n.GetNodeName(), rectSize, n.pos, this));
 				}
+				treeRoot = nodes[0];
 
 				for (int i = 0; i < loadedTree.nodes.Count; i++) {
 					nodes[i].ParseLoadedInformation(loadedTree.nodes[i].GetNodeName(), loadedTree.nodes[i].GetNodeType(), 
-						loadedTree.nodes[i].size, loadedTree.nodes[i].isRoot, this);                                    //Parse information about the tree object node to the new tree maker node
+						loadedTree.nodes[i].size, loadedTree.nodes[i].isRoot, this);                                //Parse information about the tree object node to the new tree maker node
 					List<Node> children = loadedTree.nodes[i].GetChildren();
-					foreach (Node n in children) {																		//Go through the tree object node's children
-						nodes[i].AddChild(nodes[n.listIndex]);																//Add child to the new node with the same index as the tree object node
+					foreach (Node n in children) {																	//Go through the tree object node's children
+						nodes[i].AddChild(nodes[n.listIndex]);															//Add child to the new node with the same index as the tree object node
 					}
 					if (loadedTree.nodes[i].GetParent() != null) {
-						nodes[i].SetParent(nodes[loadedTree.nodes[i].GetParent().listIndex]);                               //Set parent for the new node to the index of the tree object node's parent
+						nodes[i].SetParent(nodes[loadedTree.nodes[i].GetParent().listIndex]);                           //Set parent for the new node to the index of the tree object node's parent
 					}
 				}
 
-				nodeConnections.Clear();
 				for (int i = 0; i < loadedTree.nodeConnections.Count; i++) {                                        //Foreach connection in the tree object, create a new connection for the tree maker
 					new NodeConnection(nodes[loadedTree.nodeConnections[i].GetChild().listIndex],
 						nodes[loadedTree.nodeConnections[i].GetParent().listIndex], this, true);
 				}
 
+				if (nodes[0].GetChildren().Count == 0 && nodeConnections.Count > 0) {
+					Debug.LogWarning("So many phantom connections, so little time! BURN IN THE FIRES OF THE GARBAGE COLLECTOR!");
+					for (int i = 0; i < nodeConnections.Count; i = i) {
+						nodeConnections[i].DeleteConnection(false);
+					}
+				}
+
 				if (currentConnection != null) currentConnection.DeleteConnection(true);							//Ensure that current connection is purged
 			}
 			if (GUILayout.Button("Save changes to Tree")) {														//If the button is clicked, call the method to save changes to the tree object
-				SaveTreeChanges();
+				SaveTree();
 			}
 		}
 		GUILayout.EndArea();
-	}
+        #endregion
+    }
 
-	public void OnGUI() {
+    public void OnGUI() {
 		if (treeRoot == null) {
 			nodes.Add(treeRoot = new Node("Root", rectSize, new Vector2(position.width / 2, 50), this));
 			nodes[0].MakeRoot();
@@ -281,17 +316,49 @@ public class TreeMaker : EditorWindow {
 		}
 	}
 
+	void DeleteNode(Node nodeToDelete = null) {
+		Debug.LogWarning("Node obliterater, FIRE!");
+		if (nodeToDelete != null) {
+			for (int i = 0; i < nodeConnections.Count; i++) {
+				if (nodeConnections[i].GetChild() == nodeToDelete || nodeConnections[i].GetParent() == nodeToDelete) {
+					nodeConnections[i].DeleteConnection(false);
+				}
+			}
+			for (int i = 0; i < nodes.Count; i++) {
+				if (nodes[i] == nodeToDelete) {
+					nodes.RemoveAt(i);
+				}
+			}
+		} else {
+			for (int i = 0; i < nodeConnections.Count; i++) {
+				if (nodeConnections[i].GetChild() == selectedNode || nodeConnections[i].GetParent() == selectedNode) {
+					nodeConnections[i].DeleteConnection(false);
+				}
+			}
+			for (int i = 0; i < nodes.Count; i++) {
+				if (nodes[i] == selectedNode) {
+					nodes.RemoveAt(i);
+				}
+			}
+			selectedNode = null;
+		}
+	}
+
     public void Zoom(int direction) {
+		bool zoomState = isZoomed;
 		if (direction == 1) {																				//If scroll up
 			rectSize[0] = 80;																					//Set width 80
 			rectSize[1] = 30;                                                                                   //Set height 30
+			isZoomed = false;
 		} else if (direction == -1) {																		//If scroll down
 			rectSize[0] = 130;                                                                                  //Set width 130
 			rectSize[1] = 80;                                                                                   //Set height 80
+			isZoomed = true;
 		}
 
-		foreach (Node tn in nodes) {                                                             //Go through all tree objects
-			tn.ChangeSize(rectSize);                                                                            //Call ChangeSize with parameter rectSize
+		foreach (Node tn in nodes) {																		//Go through all tree objects to change size and reposition them
+			tn.ChangeSize(rectSize);                                                                       
+		    if (zoomState != isZoomed) tn.RepositionForZoom(treeRoot);										
 		}
 	}
 
@@ -300,10 +367,10 @@ public class TreeMaker : EditorWindow {
 	public void SetCurrentConnection(NodeConnection nodeConnection) => currentConnection = nodeConnection;
 
 	public void RemoveConnection(int index) {
-		if (nodeConnections.Count - 1 <= index) nodeConnections.RemoveAt(index);
+		if (index < nodeConnections.Count) nodeConnections.RemoveAt(index);
 	}
 
-	public void FindImproperConnections(Node nodeToCheckAgainst, bool isParent) {
+	public void FindImproperConnections(Node nodeToCheckAgainst) {
 		int connectionToRemove = -1;
 		nodeConnections.ForEach(n => { if (n.GetParent() == nodeToCheckAgainst) connectionToRemove = GetConnectionIndex(n); });
 		Debug.Log(nodeConnections.Count);
@@ -330,36 +397,96 @@ public class TreeMaker : EditorWindow {
 			Debug.LogError("No name entered!");
 			return;
 		}
-		TreeObject behaviorTree = CreateInstance<TreeObject>();												//Create a new instance of the scriptable object TreeObject
-		behaviorTree.name = treeName;																		//Set the object's name
-		behaviorTree.nodeConnections = nodeConnections;														//Add the current node connections to the object
+		SaveTree();
+	}
 
-		List<Node> rootedNodes = new List<Node>();
-		int index = 0;
-		foreach (Node n in nodes) {																			//Go through all the nodes 
-			if (n.IsConnectedToRoot()) {																		//Ensure that the node is connected to the root (otherwise we don't want it in the final tree)
-				rootedNodes.Add(n);																				
-				n.listIndex = index;
-				index++;
+	void SaveTree() {
+		Node root = null;
+		for (int i = 0; i < nodes.Count; i++) {																//Ensure that root is the first node in the tree!
+			if (nodes[i].isRoot && i == 0) break;
+			if (nodes[i].isRoot) {
+				root = nodes[i];
+				nodes.RemoveAt(i);
+				nodes.Insert(0, root);
+				break;
 			}
 		}
-		behaviorTree.nodes = rootedNodes;																	//Add the viable nodes to the object
+		
+		List<Node> rootedNodes = new List<Node>();
+		for (int i = 0; i < nodes[0].GetChildren().Count; i = i) {											//Delete nodes that aren't connected to the root
+			if (!nodes[0].GetChildren()[i].IsConnectedToRoot()) {
+				DeleteNode(nodes[0].GetChildren()[i]);
+			} else {
+				i++;
+			}
+		}
+
+		for (int i = 0; i < nodes.Count; i = i) {
+			if (nodes[i].IsConnectedToRoot()) {																	//Ensure that the node is connected to the root (otherwise we don't want it in the tree)
+				rootedNodes.Add(new Node(nodes[i].GetNodeName(), nodes[i].size, nodes[i].pos, this));
+				rootedNodes[i].isRoot = nodes[i].isRoot;
+				rootedNodes[i].listIndex = i;
+				rootedNodes[i].SetNodeType(nodes[i].GetNodeType());
+				rootedNodes[i].childConnectionPoint = nodes[i].childConnectionPoint;
+				rootedNodes[i].parentConnectionPoint = nodes[i].parentConnectionPoint;
+				nodes[i].listIndex = i;
+				i++;
+			} else {
+				DeleteNode(nodes[i]);
+			}
+		}
+
+		for (int i = 0; i < rootedNodes.Count; i++) {                                                       //Compare tree object nodes and tree maker nodes to find and set parents and children
+			if (nodes[i].GetParent() != null) rootedNodes[i].SetParent(rootedNodes[nodes[i].GetParent().listIndex]);
+
+			List<Node> nodeChildren = new List<Node>(nodes[i].GetChildren());
+			if (nodeChildren != null && nodeChildren.Count > 0) {
+				foreach (Node n in nodeChildren) {
+					rootedNodes[i].AddChild(rootedNodes[n.listIndex]);
+				}
+			}
+		}
+
+		List<NodeConnection> rootedConnections = new List<NodeConnection>();
+		for (int i = 0; i < nodeConnections.Count; i++) {                                                   //Create new connections that can be saved
+			rootedConnections.Add(new NodeConnection(rootedNodes[nodeConnections[i].GetChild().listIndex], rootedNodes[nodeConnections[i].GetParent().listIndex], this, true, true));
+			rootedConnections[i].SetChildPoint(rootedConnections[i].GetChild().childConnectionPoint);
+			rootedConnections[i].SetParentPoint(nodeConnections[i].GetParent().parentConnectionPoint);
+		}
 
 		int leafCount = 0;
-		foreach (Node n in rootedNodes) {																	//Go through all viable nodes and find the number of leaves (leaf nodes)
+		foreach (Node n in rootedNodes) {                                                                   //Go through all viable nodes and find the number of leaves (leaf nodes)
 			if (n.GetNodeType() == NodeTypes.Leaf) {
 				leafCount++;
 			}
 		}
-		behaviorTree.leafCount = leafCount;																	//Add the leafCount to the object
 
-		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");			//Create a asset in the folder with the user-entered name
-		AssetDatabase.SaveAssets();																			//Save assets to write the new asset to the disk
+		if (isTreeLoaded) {
+			loadedTree.nodes.Clear();
+			loadedTree.nodes = new List<Node>(rootedNodes);
+			loadedTree.nodeConnections.Clear();
+			loadedTree.nodeConnections = new List<NodeConnection>(rootedConnections);
+			loadedTree.leafCount = leafCount;
+		} else {
+			TreeObject behaviorTree = CreateInstance<TreeObject>();                                             //Create a new instance of the scriptable object TreeObject
+			behaviorTree.name = treeName;                                                                       //Set the object's name
+			behaviorTree.nodes = new List<Node>(rootedNodes);													//Add the viable nodes to the object
+			behaviorTree.nodeConnections = new List<NodeConnection>(rootedConnections); ;
+			behaviorTree.leafCount = leafCount;                                                                 //Add the leafCount to the object
+			AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");            //Create a asset in the folder with the user-entered name
+		}
+		AssetDatabase.SaveAssets();                                                                         //Save assets to write the new asset to the disk
+		Debug.Log("The tree '" + treeName + "' was saved");
 	}
 
-	void SaveTreeChanges() {
-		isTreeLoaded = false;
-		Debug.Log("Here");
+	void ClearWorkSpace() {
+		for (int i = 0; i < nodeConnections.Count; i = 0) {                                         //Command all connections to properly delete themselves
+			nodeConnections[i].DeleteConnection(false);
+		}
+
+		treeRoot = null;
+		for (int i = 0; i < nodes.Count; i = i) {                                                   //Go through all nodes and delete them except the first node, which is the root
+			DeleteNode(nodes[i]);
+		}
 	}
 }
- 
