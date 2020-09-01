@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3f7b17d621ed6944c90069f90018bc54, type: 3}
-  m_Name: Test
+  m_Name: Example
   m_EditorClassIdentifier: 
   nodes:
   - dragStart: {x: 0, y: 0}
@@ -20,8 +20,8 @@ MonoBehaviour:
     - id: 1
     - id: 2
     isDebugging: 0
-    childConnectionPoint: {x: 573.5, y: 97, z: 0}
-    parentConnectionPoint: {x: 573.5, y: 17, z: 0}
+    childConnectionPoint: {x: 591.5, y: 71, z: 0}
+    parentConnectionPoint: {x: 591.5, y: -9, z: 0}
     isSelected: 0
     listIndex: 0
   - dragStart: {x: 0, y: 0}
@@ -29,8 +29,8 @@ MonoBehaviour:
       id: 3
     children: []
     isDebugging: 0
-    childConnectionPoint: {x: 365, y: 455, z: 0}
-    parentConnectionPoint: {x: 365, y: 375, z: 0}
+    childConnectionPoint: {x: 356, y: 411, z: 0}
+    parentConnectionPoint: {x: 356, y: 331, z: 0}
     isSelected: 0
     listIndex: 1
   - dragStart: {x: 0, y: 0}
@@ -38,8 +38,8 @@ MonoBehaviour:
       id: 2
     children: []
     isDebugging: 0
-    childConnectionPoint: {x: 786, y: 350, z: 0}
-    parentConnectionPoint: {x: 786, y: 270, z: 0}
+    childConnectionPoint: {x: 827, y: 306, z: 0}
+    parentConnectionPoint: {x: 827, y: 226, z: 0}
     isSelected: 0
     listIndex: 2
   - dragStart: {x: 0, y: 0}
@@ -47,8 +47,8 @@ MonoBehaviour:
       id: 2
     children: []
     isDebugging: 0
-    childConnectionPoint: {x: 650, y: 348, z: 0}
-    parentConnectionPoint: {x: 650, y: 268, z: 0}
+    childConnectionPoint: {x: 691, y: 304, z: 0}
+    parentConnectionPoint: {x: 691, y: 224, z: 0}
     isSelected: 0
     listIndex: 3
   - dragStart: {x: 0, y: 0}
@@ -56,8 +56,8 @@ MonoBehaviour:
       id: 1
     children: []
     isDebugging: 0
-    childConnectionPoint: {x: 505, y: 345, z: 0}
-    parentConnectionPoint: {x: 505, y: 265, z: 0}
+    childConnectionPoint: {x: 496, y: 301, z: 0}
+    parentConnectionPoint: {x: 496, y: 221, z: 0}
     isSelected: 0
     listIndex: 4
   - dragStart: {x: 0, y: 0}
@@ -66,8 +66,8 @@ MonoBehaviour:
     children:
     - id: 4
     isDebugging: 0
-    childConnectionPoint: {x: 365, y: 346, z: 0}
-    parentConnectionPoint: {x: 365, y: 266, z: 0}
+    childConnectionPoint: {x: 356, y: 302, z: 0}
+    parentConnectionPoint: {x: 356, y: 222, z: 0}
     isSelected: 0
     listIndex: 5
   - dragStart: {x: 0, y: 0}
@@ -77,8 +77,8 @@ MonoBehaviour:
     - id: 3
     - id: 6
     isDebugging: 0
-    childConnectionPoint: {x: 506, y: 230, z: 0}
-    parentConnectionPoint: {x: 506, y: 150, z: 0}
+    childConnectionPoint: {x: 497, y: 186, z: 0}
+    parentConnectionPoint: {x: 497, y: 106, z: 0}
     isSelected: 0
     listIndex: 6
   - dragStart: {x: 0, y: 0}
@@ -88,25 +88,25 @@ MonoBehaviour:
     - id: 7
     - id: 8
     isDebugging: 0
-    childConnectionPoint: {x: 648, y: 231, z: 0}
-    parentConnectionPoint: {x: 648, y: 151, z: 0}
+    childConnectionPoint: {x: 689, y: 187, z: 0}
+    parentConnectionPoint: {x: 689, y: 107, z: 0}
     isSelected: 0
     listIndex: 7
   nodeConnections:
-  - childPoint: {x: 506, y: 230, z: 0}
-    parentPoint: {x: 573.5, y: 17, z: 0}
-  - childPoint: {x: 648, y: 231, z: 0}
-    parentPoint: {x: 573.5, y: 17, z: 0}
-  - childPoint: {x: 365, y: 346, z: 0}
-    parentPoint: {x: 506, y: 150, z: 0}
-  - childPoint: {x: 365, y: 455, z: 0}
-    parentPoint: {x: 365, y: 266, z: 0}
-  - childPoint: {x: 505, y: 345, z: 0}
-    parentPoint: {x: 506, y: 150, z: 0}
-  - childPoint: {x: 650, y: 348, z: 0}
-    parentPoint: {x: 648, y: 151, z: 0}
-  - childPoint: {x: 786, y: 350, z: 0}
-    parentPoint: {x: 648, y: 151, z: 0}
+  - childPoint: {x: 497, y: 186, z: 0}
+    parentPoint: {x: 591.5, y: -9, z: 0}
+  - childPoint: {x: 689, y: 187, z: 0}
+    parentPoint: {x: 591.5, y: -9, z: 0}
+  - childPoint: {x: 356, y: 302, z: 0}
+    parentPoint: {x: 497, y: 106, z: 0}
+  - childPoint: {x: 356, y: 411, z: 0}
+    parentPoint: {x: 356, y: 222, z: 0}
+  - childPoint: {x: 496, y: 301, z: 0}
+    parentPoint: {x: 497, y: 106, z: 0}
+  - childPoint: {x: 691, y: 304, z: 0}
+    parentPoint: {x: 689, y: 107, z: 0}
+  - childPoint: {x: 827, y: 306, z: 0}
+    parentPoint: {x: 689, y: 107, z: 0}
   leafCount: 4
   references:
     version: 1
@@ -122,8 +122,8 @@ MonoBehaviour:
         - id: 3
         - id: 6
         isDebugging: 0
-        childConnectionPoint: {x: 506, y: 230, z: 0}
-        parentConnectionPoint: {x: 506, y: 150, z: 0}
+        childConnectionPoint: {x: 497, y: 186, z: 0}
+        parentConnectionPoint: {x: 497, y: 106, z: 0}
         isSelected: 0
         listIndex: 6
     00000002:
@@ -136,8 +136,8 @@ MonoBehaviour:
         - id: 7
         - id: 8
         isDebugging: 0
-        childConnectionPoint: {x: 648, y: 231, z: 0}
-        parentConnectionPoint: {x: 648, y: 151, z: 0}
+        childConnectionPoint: {x: 689, y: 187, z: 0}
+        parentConnectionPoint: {x: 689, y: 107, z: 0}
         isSelected: 0
         listIndex: 7
     00000003:
@@ -149,8 +149,8 @@ MonoBehaviour:
         children:
         - id: 4
         isDebugging: 0
-        childConnectionPoint: {x: 365, y: 346, z: 0}
-        parentConnectionPoint: {x: 365, y: 266, z: 0}
+        childConnectionPoint: {x: 356, y: 302, z: 0}
+        parentConnectionPoint: {x: 356, y: 222, z: 0}
         isSelected: 0
         listIndex: 5
     00000004:
@@ -161,8 +161,8 @@ MonoBehaviour:
           id: 3
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 365, y: 455, z: 0}
-        parentConnectionPoint: {x: 365, y: 375, z: 0}
+        childConnectionPoint: {x: 356, y: 411, z: 0}
+        parentConnectionPoint: {x: 356, y: 331, z: 0}
         isSelected: 0
         listIndex: 1
     00000005:
@@ -175,8 +175,8 @@ MonoBehaviour:
         - id: 1
         - id: 2
         isDebugging: 0
-        childConnectionPoint: {x: 573.5, y: 97, z: 0}
-        parentConnectionPoint: {x: 573.5, y: 17, z: 0}
+        childConnectionPoint: {x: 591.5, y: 71, z: 0}
+        parentConnectionPoint: {x: 591.5, y: -9, z: 0}
         isSelected: 0
         listIndex: 0
     00000006:
@@ -187,8 +187,8 @@ MonoBehaviour:
           id: 1
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 505, y: 345, z: 0}
-        parentConnectionPoint: {x: 505, y: 265, z: 0}
+        childConnectionPoint: {x: 496, y: 301, z: 0}
+        parentConnectionPoint: {x: 496, y: 221, z: 0}
         isSelected: 0
         listIndex: 4
     00000007:
@@ -199,8 +199,8 @@ MonoBehaviour:
           id: 2
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 650, y: 348, z: 0}
-        parentConnectionPoint: {x: 650, y: 268, z: 0}
+        childConnectionPoint: {x: 691, y: 304, z: 0}
+        parentConnectionPoint: {x: 691, y: 224, z: 0}
         isSelected: 0
         listIndex: 3
     00000008:
@@ -211,7 +211,7 @@ MonoBehaviour:
           id: 2
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 786, y: 350, z: 0}
-        parentConnectionPoint: {x: 786, y: 270, z: 0}
+        childConnectionPoint: {x: 827, y: 306, z: 0}
+        parentConnectionPoint: {x: 827, y: 226, z: 0}
         isSelected: 0
         listIndex: 2
