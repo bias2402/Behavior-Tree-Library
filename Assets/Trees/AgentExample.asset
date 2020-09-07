@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3f7b17d621ed6944c90069f90018bc54, type: 3}
-  m_Name: Example
+  m_Name: AgentExample
   m_EditorClassIdentifier: 
   nodes:
   - dragStart: {x: 0, y: 0}
@@ -20,93 +20,93 @@ MonoBehaviour:
     - id: 1
     - id: 2
     isDebugging: 0
-    childConnectionPoint: {x: 591.5, y: 71, z: 0}
-    parentConnectionPoint: {x: 591.5, y: -9, z: 0}
+    childConnectionPoint: {x: 502.5, y: 61, z: 0}
+    parentConnectionPoint: {x: 502.5, y: 31, z: 0}
     isSelected: 0
     listIndex: 0
   - dragStart: {x: 0, y: 0}
     parent:
       id: 3
-    children: []
+    children:
+    - id: 4
+    - id: 5
     isDebugging: 0
-    childConnectionPoint: {x: 356, y: 411, z: 0}
-    parentConnectionPoint: {x: 356, y: 331, z: 0}
+    childConnectionPoint: {x: 422, y: 119, z: 0}
+    parentConnectionPoint: {x: 422, y: 89, z: 0}
     isSelected: 0
     listIndex: 1
   - dragStart: {x: 0, y: 0}
     parent:
-      id: 2
+      id: 1
     children: []
     isDebugging: 0
-    childConnectionPoint: {x: 827, y: 306, z: 0}
-    parentConnectionPoint: {x: 827, y: 226, z: 0}
+    childConnectionPoint: {x: 429, y: 200, z: 0}
+    parentConnectionPoint: {x: 429, y: 170, z: 0}
     isSelected: 0
     listIndex: 2
   - dragStart: {x: 0, y: 0}
     parent:
-      id: 2
-    children: []
+      id: 1
+    children:
+    - id: 6
     isDebugging: 0
-    childConnectionPoint: {x: 691, y: 304, z: 0}
-    parentConnectionPoint: {x: 691, y: 224, z: 0}
+    childConnectionPoint: {x: 325, y: 199, z: 0}
+    parentConnectionPoint: {x: 325, y: 169, z: 0}
     isSelected: 0
     listIndex: 3
   - dragStart: {x: 0, y: 0}
     parent:
-      id: 1
+      id: 4
     children: []
     isDebugging: 0
-    childConnectionPoint: {x: 496, y: 301, z: 0}
-    parentConnectionPoint: {x: 496, y: 221, z: 0}
+    childConnectionPoint: {x: 324, y: 270, z: 0}
+    parentConnectionPoint: {x: 324, y: 240, z: 0}
     isSelected: 0
     listIndex: 4
   - dragStart: {x: 0, y: 0}
     parent:
-      id: 1
-    children:
-    - id: 4
-    isDebugging: 0
-    childConnectionPoint: {x: 356, y: 302, z: 0}
-    parentConnectionPoint: {x: 356, y: 222, z: 0}
-    isSelected: 0
-    listIndex: 5
-  - dragStart: {x: 0, y: 0}
-    parent:
-      id: 5
-    children:
-    - id: 3
-    - id: 6
-    isDebugging: 0
-    childConnectionPoint: {x: 497, y: 186, z: 0}
-    parentConnectionPoint: {x: 497, y: 106, z: 0}
-    isSelected: 0
-    listIndex: 6
-  - dragStart: {x: 0, y: 0}
-    parent:
-      id: 5
+      id: 3
     children:
     - id: 7
     - id: 8
     isDebugging: 0
-    childConnectionPoint: {x: 689, y: 187, z: 0}
-    parentConnectionPoint: {x: 689, y: 107, z: 0}
+    childConnectionPoint: {x: 604, y: 128, z: 0}
+    parentConnectionPoint: {x: 604, y: 98, z: 0}
+    isSelected: 0
+    listIndex: 5
+  - dragStart: {x: 0, y: 0}
+    parent:
+      id: 2
+    children: []
+    isDebugging: 0
+    childConnectionPoint: {x: 604, y: 202, z: 0}
+    parentConnectionPoint: {x: 604, y: 172, z: 0}
+    isSelected: 0
+    listIndex: 6
+  - dragStart: {x: 0, y: 0}
+    parent:
+      id: 2
+    children: []
+    isDebugging: 0
+    childConnectionPoint: {x: 699, y: 202, z: 0}
+    parentConnectionPoint: {x: 699, y: 172, z: 0}
     isSelected: 0
     listIndex: 7
   nodeConnections:
-  - childPoint: {x: 497, y: 186, z: 0}
-    parentPoint: {x: 591.5, y: -9, z: 0}
-  - childPoint: {x: 689, y: 187, z: 0}
-    parentPoint: {x: 591.5, y: -9, z: 0}
-  - childPoint: {x: 356, y: 302, z: 0}
-    parentPoint: {x: 497, y: 106, z: 0}
-  - childPoint: {x: 356, y: 411, z: 0}
-    parentPoint: {x: 356, y: 222, z: 0}
-  - childPoint: {x: 496, y: 301, z: 0}
-    parentPoint: {x: 497, y: 106, z: 0}
-  - childPoint: {x: 691, y: 304, z: 0}
-    parentPoint: {x: 689, y: 107, z: 0}
-  - childPoint: {x: 827, y: 306, z: 0}
-    parentPoint: {x: 689, y: 107, z: 0}
+  - childPoint: {x: 422, y: 119, z: 0}
+    parentPoint: {x: 502.5, y: 31, z: 0}
+  - childPoint: {x: 325, y: 199, z: 0}
+    parentPoint: {x: 422, y: 89, z: 0}
+  - childPoint: {x: 429, y: 200, z: 0}
+    parentPoint: {x: 422, y: 89, z: 0}
+  - childPoint: {x: 324, y: 270, z: 0}
+    parentPoint: {x: 325, y: 169, z: 0}
+  - childPoint: {x: 604, y: 128, z: 0}
+    parentPoint: {x: 502.5, y: 31, z: 0}
+  - childPoint: {x: 604, y: 202, z: 0}
+    parentPoint: {x: 604, y: 98, z: 0}
+  - childPoint: {x: 699, y: 202, z: 0}
+    parentPoint: {x: 604, y: 98, z: 0}
   leafCount: 4
   references:
     version: 1
@@ -117,55 +117,30 @@ MonoBehaviour:
       data:
         dragStart: {x: 0, y: 0}
         parent:
-          id: 5
+          id: 3
         children:
-        - id: 3
-        - id: 6
+        - id: 4
+        - id: 5
         isDebugging: 0
-        childConnectionPoint: {x: 497, y: 186, z: 0}
-        parentConnectionPoint: {x: 497, y: 106, z: 0}
+        childConnectionPoint: {x: 422, y: 119, z: 0}
+        parentConnectionPoint: {x: 422, y: 89, z: 0}
         isSelected: 0
-        listIndex: 6
+        listIndex: 1
     00000002:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
         dragStart: {x: 0, y: 0}
         parent:
-          id: 5
+          id: 3
         children:
         - id: 7
         - id: 8
         isDebugging: 0
-        childConnectionPoint: {x: 689, y: 187, z: 0}
-        parentConnectionPoint: {x: 689, y: 107, z: 0}
-        isSelected: 0
-        listIndex: 7
-    00000003:
-      type: {class: Node, ns: , asm: Assembly-CSharp}
-      data:
-        dragStart: {x: 0, y: 0}
-        parent:
-          id: 1
-        children:
-        - id: 4
-        isDebugging: 0
-        childConnectionPoint: {x: 356, y: 302, z: 0}
-        parentConnectionPoint: {x: 356, y: 222, z: 0}
+        childConnectionPoint: {x: 604, y: 128, z: 0}
+        parentConnectionPoint: {x: 604, y: 98, z: 0}
         isSelected: 0
         listIndex: 5
-    00000004:
-      type: {class: Node, ns: , asm: Assembly-CSharp}
-      data:
-        dragStart: {x: 0, y: 0}
-        parent:
-          id: 3
-        children: []
-        isDebugging: 0
-        childConnectionPoint: {x: 356, y: 411, z: 0}
-        parentConnectionPoint: {x: 356, y: 331, z: 0}
-        isSelected: 0
-        listIndex: 1
-    00000005:
+    00000003:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
         dragStart: {x: 0, y: 0}
@@ -175,11 +150,24 @@ MonoBehaviour:
         - id: 1
         - id: 2
         isDebugging: 0
-        childConnectionPoint: {x: 591.5, y: 71, z: 0}
-        parentConnectionPoint: {x: 591.5, y: -9, z: 0}
+        childConnectionPoint: {x: 502.5, y: 61, z: 0}
+        parentConnectionPoint: {x: 502.5, y: 31, z: 0}
         isSelected: 0
         listIndex: 0
-    00000006:
+    00000004:
+      type: {class: Node, ns: , asm: Assembly-CSharp}
+      data:
+        dragStart: {x: 0, y: 0}
+        parent:
+          id: 1
+        children:
+        - id: 6
+        isDebugging: 0
+        childConnectionPoint: {x: 325, y: 199, z: 0}
+        parentConnectionPoint: {x: 325, y: 169, z: 0}
+        isSelected: 0
+        listIndex: 3
+    00000005:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
         dragStart: {x: 0, y: 0}
@@ -187,8 +175,20 @@ MonoBehaviour:
           id: 1
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 496, y: 301, z: 0}
-        parentConnectionPoint: {x: 496, y: 221, z: 0}
+        childConnectionPoint: {x: 429, y: 200, z: 0}
+        parentConnectionPoint: {x: 429, y: 170, z: 0}
+        isSelected: 0
+        listIndex: 2
+    00000006:
+      type: {class: Node, ns: , asm: Assembly-CSharp}
+      data:
+        dragStart: {x: 0, y: 0}
+        parent:
+          id: 4
+        children: []
+        isDebugging: 0
+        childConnectionPoint: {x: 324, y: 270, z: 0}
+        parentConnectionPoint: {x: 324, y: 240, z: 0}
         isSelected: 0
         listIndex: 4
     00000007:
@@ -199,10 +199,10 @@ MonoBehaviour:
           id: 2
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 691, y: 304, z: 0}
-        parentConnectionPoint: {x: 691, y: 224, z: 0}
+        childConnectionPoint: {x: 604, y: 202, z: 0}
+        parentConnectionPoint: {x: 604, y: 172, z: 0}
         isSelected: 0
-        listIndex: 3
+        listIndex: 6
     00000008:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
@@ -211,7 +211,7 @@ MonoBehaviour:
           id: 2
         children: []
         isDebugging: 0
-        childConnectionPoint: {x: 827, y: 306, z: 0}
-        parentConnectionPoint: {x: 827, y: 226, z: 0}
+        childConnectionPoint: {x: 699, y: 202, z: 0}
+        parentConnectionPoint: {x: 699, y: 172, z: 0}
         isSelected: 0
-        listIndex: 2
+        listIndex: 7

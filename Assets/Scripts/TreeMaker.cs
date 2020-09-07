@@ -373,7 +373,6 @@ public class TreeMaker : EditorWindow {
 	public void FindImproperConnections(Node nodeToCheckAgainst) {
 		int connectionToRemove = -1;
 		nodeConnections.ForEach(n => { if (n.GetParent() == nodeToCheckAgainst) connectionToRemove = GetConnectionIndex(n); });
-		Debug.Log(nodeConnections.Count);
 		if (connectionToRemove != -1) {
 			nodeConnections[connectionToRemove].DeleteConnection(false);
 		}
