@@ -27,6 +27,8 @@ public class TreeHandler : MonoBehaviour {
                     }
                 }
             }
+        } else {
+            leafMethods.Clear();
         }
     }
 

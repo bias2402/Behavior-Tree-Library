@@ -136,6 +136,7 @@ public class TreeMaker : EditorWindow {
 		} else {																							//If a tree object has been loaded, draw the UI for saving and updating it
 			if (!isTreeLoaded) {
 				isTreeLoaded = true;
+				treeName = loadedTree.name;
 				ClearWorkSpace();
 
 				foreach (Node n in loadedTree.nodes) {															//Foreach node in the tree object, create a new node for the tree maker
@@ -156,13 +157,13 @@ public class TreeMaker : EditorWindow {
 				}
 
 				for (int i = 0; i < loadedTree.nodeConnections.Count; i++) {                                        //Foreach connection in the tree object, create a new connection for the tree maker
-					new NodeConnection(nodes[loadedTree.nodeConnections[i].GetChild().listIndex],
-						nodes[loadedTree.nodeConnections[i].GetParent().listIndex], this, true);
+					new NodeConnection(nodes[loadedTree.nodeConnections[i].childIndex],
+						nodes[loadedTree.nodeConnections[i].parentIndex], this, true);
 				}
 
 				if (nodes[0].GetChildren().Count == 0 && nodeConnections.Count > 0) {
 					Debug.LogWarning("So many phantom connections, so little time! BURN IN THE FIRES OF THE GARBAGE COLLECTOR!");
-					for (int i = 0; i < nodeConnections.Count; i = i) {
+					for (int i = 0; i < nodeConnections.Count;) {
 						nodeConnections[i].DeleteConnection(false);
 					}
 				}
@@ -412,7 +413,7 @@ public class TreeMaker : EditorWindow {
 		}
 		
 		List<Node> rootedNodes = new List<Node>();
-		for (int i = 0; i < nodes[0].GetChildren().Count; i = i) {											//Delete nodes that aren't connected to the root
+		for (int i = 0; i < nodes[0].GetChildren().Count;) {												//Delete nodes that aren't connected to the root
 			if (!nodes[0].GetChildren()[i].IsConnectedToRoot()) {
 				DeleteNode(nodes[0].GetChildren()[i]);
 			} else {
@@ -420,7 +421,7 @@ public class TreeMaker : EditorWindow {
 			}
 		}
 
-		for (int i = 0; i < nodes.Count; i = i) {
+		for (int i = 0; i < nodes.Count;) {
 			if (nodes[i].IsConnectedToRoot()) {																	//Ensure that the node is connected to the root (otherwise we don't want it in the tree)
 				rootedNodes.Add(new Node(nodes[i].GetNodeName(), nodes[i].size, nodes[i].pos, this));
 				rootedNodes[i].isRoot = nodes[i].isRoot;
@@ -449,8 +450,10 @@ public class TreeMaker : EditorWindow {
 		List<NodeConnection> rootedConnections = new List<NodeConnection>();
 		for (int i = 0; i < nodeConnections.Count; i++) {                                                   //Create new connections that can be saved
 			rootedConnections.Add(new NodeConnection(rootedNodes[nodeConnections[i].GetChild().listIndex], rootedNodes[nodeConnections[i].GetParent().listIndex], this, true, true));
-			rootedConnections[i].SetChildPoint(rootedConnections[i].GetChild().childConnectionPoint);
+			rootedConnections[i].SetChildPoint(nodeConnections[i].GetChild().childConnectionPoint);
 			rootedConnections[i].SetParentPoint(nodeConnections[i].GetParent().parentConnectionPoint);
+			rootedConnections[i].SetChildIndex(nodeConnections[i].GetChild().listIndex);
+			rootedConnections[i].SetParentIndex(nodeConnections[i].GetParent().listIndex);
 		}
 
 		int leafCount = 0;
@@ -461,19 +464,18 @@ public class TreeMaker : EditorWindow {
 		}
 
 		if (isTreeLoaded) {
-			loadedTree.nodes.Clear();
-			loadedTree.nodes = new List<Node>(rootedNodes);
-			loadedTree.nodeConnections.Clear();
-			loadedTree.nodeConnections = new List<NodeConnection>(rootedConnections);
-			loadedTree.leafCount = leafCount;
-		} else {
-			TreeObject behaviorTree = CreateInstance<TreeObject>();                                             //Create a new instance of the scriptable object TreeObject
-			behaviorTree.name = treeName;                                                                       //Set the object's name
-			behaviorTree.nodes = new List<Node>(rootedNodes);													//Add the viable nodes to the object
-			behaviorTree.nodeConnections = new List<NodeConnection>(rootedConnections); ;
-			behaviorTree.leafCount = leafCount;                                                                 //Add the leafCount to the object
-			AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");            //Create a asset in the folder with the user-entered name
+			AssetDatabase.DeleteAsset("Assets/Trees/" + loadedTree.name + ".asset");
 		}
+		TreeObject behaviorTree = CreateInstance<TreeObject>();                                             //Create a new instance of the scriptable object TreeObject
+		behaviorTree.name = treeName;                                                                       //Set the object's name
+		behaviorTree.nodes = new List<Node>(rootedNodes);                                                   //Add the viable nodes to the object
+		behaviorTree.nodeConnections = new List<NodeConnection>(rootedConnections); ;
+		behaviorTree.leafCount = leafCount;                                                                 //Add the leafCount to the object
+		AssetDatabase.CreateAsset(behaviorTree, "Assets/Trees/" + behaviorTree.name + ".asset");            //Create a asset in the folder with the user-entered name
+		if (isTreeLoaded) {
+			loadedTree = behaviorTree;
+		}
+
 		AssetDatabase.SaveAssets();                                                                         //Save assets to write the new asset to the disk
 		Debug.Log("The tree '" + treeName + "' was saved");
 	}

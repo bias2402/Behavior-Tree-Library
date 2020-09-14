@@ -13,100 +13,170 @@ MonoBehaviour:
   m_Name: AgentExample
   m_EditorClassIdentifier: 
   nodes:
-  - dragStart: {x: 0, y: 0}
+  - pos: {x: 501, y: 34}
+    dragStart: {x: 0, y: 0}
     parent:
       id: 0
     children:
     - id: 1
     - id: 2
+    name: Root
+    nodeType: 2
     isDebugging: 0
-    childConnectionPoint: {x: 502.5, y: 61, z: 0}
-    parentConnectionPoint: {x: 502.5, y: 31, z: 0}
+    isRoot: 1
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 541, y: 64, z: 0}
+    parentConnectionPoint: {x: 541, y: 34, z: 0}
     isSelected: 0
     listIndex: 0
-  - dragStart: {x: 0, y: 0}
+  - pos: {x: 631, y: 117}
+    dragStart: {x: 0, y: 0}
     parent:
       id: 3
     children:
     - id: 4
     - id: 5
+    name: Slt 1
+    nodeType: 2
     isDebugging: 0
-    childConnectionPoint: {x: 422, y: 119, z: 0}
-    parentConnectionPoint: {x: 422, y: 89, z: 0}
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 671, y: 147, z: 0}
+    parentConnectionPoint: {x: 671, y: 117, z: 0}
     isSelected: 0
     listIndex: 1
-  - dragStart: {x: 0, y: 0}
+  - pos: {x: 696, y: 215}
+    dragStart: {x: 0, y: 0}
+    parent:
+      id: 2
+    children: []
+    name: Leaf 4
+    nodeType: 1
+    isDebugging: 0
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 736, y: 245, z: 0}
+    parentConnectionPoint: {x: 736, y: 215, z: 0}
+    isSelected: 0
+    listIndex: 2
+  - pos: {x: 562, y: 214}
+    dragStart: {x: 0, y: 0}
+    parent:
+      id: 2
+    children: []
+    name: Leaf 2
+    nodeType: 1
+    isDebugging: 0
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 602, y: 244, z: 0}
+    parentConnectionPoint: {x: 602, y: 214, z: 0}
+    isSelected: 0
+    listIndex: 3
+  - pos: {x: 454, y: 214}
+    dragStart: {x: 0, y: 0}
     parent:
       id: 1
     children: []
+    name: Leaf 2
+    nodeType: 1
     isDebugging: 0
-    childConnectionPoint: {x: 429, y: 200, z: 0}
-    parentConnectionPoint: {x: 429, y: 170, z: 0}
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 494, y: 244, z: 0}
+    parentConnectionPoint: {x: 494, y: 214, z: 0}
     isSelected: 0
-    listIndex: 2
-  - dragStart: {x: 0, y: 0}
+    listIndex: 4
+  - pos: {x: 320, y: 214}
+    dragStart: {x: 0, y: 0}
     parent:
       id: 1
     children:
     - id: 6
+    name: Inv 1
+    nodeType: 0
     isDebugging: 0
-    childConnectionPoint: {x: 325, y: 199, z: 0}
-    parentConnectionPoint: {x: 325, y: 169, z: 0}
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 360, y: 244, z: 0}
+    parentConnectionPoint: {x: 360, y: 214, z: 0}
     isSelected: 0
-    listIndex: 3
-  - dragStart: {x: 0, y: 0}
+    listIndex: 5
+  - pos: {x: 317, y: 322}
+    dragStart: {x: 0, y: 0}
     parent:
-      id: 4
+      id: 7
     children: []
+    name: Leaf 1
+    nodeType: 1
     isDebugging: 0
-    childConnectionPoint: {x: 324, y: 270, z: 0}
-    parentConnectionPoint: {x: 324, y: 240, z: 0}
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 357, y: 352, z: 0}
+    parentConnectionPoint: {x: 357, y: 322, z: 0}
     isSelected: 0
-    listIndex: 4
-  - dragStart: {x: 0, y: 0}
+    listIndex: 6
+  - pos: {x: 385, y: 112}
+    dragStart: {x: 0, y: 0}
     parent:
       id: 3
     children:
     - id: 7
     - id: 8
+    name: Sq 1
+    nodeType: 3
     isDebugging: 0
-    childConnectionPoint: {x: 604, y: 128, z: 0}
-    parentConnectionPoint: {x: 604, y: 98, z: 0}
-    isSelected: 0
-    listIndex: 5
-  - dragStart: {x: 0, y: 0}
-    parent:
-      id: 2
-    children: []
-    isDebugging: 0
-    childConnectionPoint: {x: 604, y: 202, z: 0}
-    parentConnectionPoint: {x: 604, y: 172, z: 0}
-    isSelected: 0
-    listIndex: 6
-  - dragStart: {x: 0, y: 0}
-    parent:
-      id: 2
-    children: []
-    isDebugging: 0
-    childConnectionPoint: {x: 699, y: 202, z: 0}
-    parentConnectionPoint: {x: 699, y: 172, z: 0}
+    isRoot: 0
+    size:
+    - 80
+    - 30
+    childConnectionPoint: {x: 425, y: 142, z: 0}
+    parentConnectionPoint: {x: 425, y: 112, z: 0}
     isSelected: 0
     listIndex: 7
   nodeConnections:
-  - childPoint: {x: 422, y: 119, z: 0}
-    parentPoint: {x: 502.5, y: 31, z: 0}
-  - childPoint: {x: 325, y: 199, z: 0}
-    parentPoint: {x: 422, y: 89, z: 0}
-  - childPoint: {x: 429, y: 200, z: 0}
-    parentPoint: {x: 422, y: 89, z: 0}
-  - childPoint: {x: 324, y: 270, z: 0}
-    parentPoint: {x: 325, y: 169, z: 0}
-  - childPoint: {x: 604, y: 128, z: 0}
-    parentPoint: {x: 502.5, y: 31, z: 0}
-  - childPoint: {x: 604, y: 202, z: 0}
-    parentPoint: {x: 604, y: 98, z: 0}
-  - childPoint: {x: 699, y: 202, z: 0}
-    parentPoint: {x: 604, y: 98, z: 0}
+  - childIndex: 7
+    parentIndex: 0
+    childPoint: {x: 425, y: 142, z: 0}
+    parentPoint: {x: 541, y: 34, z: 0}
+  - childIndex: 5
+    parentIndex: 7
+    childPoint: {x: 360, y: 244, z: 0}
+    parentPoint: {x: 425, y: 112, z: 0}
+  - childIndex: 4
+    parentIndex: 7
+    childPoint: {x: 494, y: 244, z: 0}
+    parentPoint: {x: 425, y: 112, z: 0}
+  - childIndex: 6
+    parentIndex: 5
+    childPoint: {x: 357, y: 352, z: 0}
+    parentPoint: {x: 360, y: 214, z: 0}
+  - childIndex: 3
+    parentIndex: 1
+    childPoint: {x: 602, y: 244, z: 0}
+    parentPoint: {x: 671, y: 117, z: 0}
+  - childIndex: 2
+    parentIndex: 1
+    childPoint: {x: 736, y: 245, z: 0}
+    parentPoint: {x: 671, y: 117, z: 0}
+  - childIndex: 1
+    parentIndex: 0
+    childPoint: {x: 671, y: 147, z: 0}
+    parentPoint: {x: 541, y: 34, z: 0}
   leafCount: 4
   references:
     version: 1
@@ -115,103 +185,159 @@ MonoBehaviour:
     00000001:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
-        dragStart: {x: 0, y: 0}
-        parent:
-          id: 3
-        children:
-        - id: 4
-        - id: 5
-        isDebugging: 0
-        childConnectionPoint: {x: 422, y: 119, z: 0}
-        parentConnectionPoint: {x: 422, y: 89, z: 0}
-        isSelected: 0
-        listIndex: 1
-    00000002:
-      type: {class: Node, ns: , asm: Assembly-CSharp}
-      data:
+        pos: {x: 385, y: 112}
         dragStart: {x: 0, y: 0}
         parent:
           id: 3
         children:
         - id: 7
         - id: 8
+        name: Sq 1
+        nodeType: 3
         isDebugging: 0
-        childConnectionPoint: {x: 604, y: 128, z: 0}
-        parentConnectionPoint: {x: 604, y: 98, z: 0}
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 425, y: 142, z: 0}
+        parentConnectionPoint: {x: 425, y: 112, z: 0}
         isSelected: 0
-        listIndex: 5
+        listIndex: 7
+    00000002:
+      type: {class: Node, ns: , asm: Assembly-CSharp}
+      data:
+        pos: {x: 631, y: 117}
+        dragStart: {x: 0, y: 0}
+        parent:
+          id: 3
+        children:
+        - id: 4
+        - id: 5
+        name: Slt 1
+        nodeType: 2
+        isDebugging: 0
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 671, y: 147, z: 0}
+        parentConnectionPoint: {x: 671, y: 117, z: 0}
+        isSelected: 0
+        listIndex: 1
     00000003:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
+        pos: {x: 501, y: 34}
         dragStart: {x: 0, y: 0}
         parent:
           id: 0
         children:
         - id: 1
         - id: 2
+        name: Root
+        nodeType: 2
         isDebugging: 0
-        childConnectionPoint: {x: 502.5, y: 61, z: 0}
-        parentConnectionPoint: {x: 502.5, y: 31, z: 0}
+        isRoot: 1
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 541, y: 64, z: 0}
+        parentConnectionPoint: {x: 541, y: 34, z: 0}
         isSelected: 0
         listIndex: 0
     00000004:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
+        pos: {x: 562, y: 214}
         dragStart: {x: 0, y: 0}
         parent:
-          id: 1
-        children:
-        - id: 6
+          id: 2
+        children: []
+        name: Leaf 2
+        nodeType: 1
         isDebugging: 0
-        childConnectionPoint: {x: 325, y: 199, z: 0}
-        parentConnectionPoint: {x: 325, y: 169, z: 0}
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 602, y: 244, z: 0}
+        parentConnectionPoint: {x: 602, y: 214, z: 0}
         isSelected: 0
         listIndex: 3
     00000005:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
+        pos: {x: 696, y: 215}
         dragStart: {x: 0, y: 0}
         parent:
-          id: 1
+          id: 2
         children: []
+        name: Leaf 4
+        nodeType: 1
         isDebugging: 0
-        childConnectionPoint: {x: 429, y: 200, z: 0}
-        parentConnectionPoint: {x: 429, y: 170, z: 0}
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 736, y: 245, z: 0}
+        parentConnectionPoint: {x: 736, y: 215, z: 0}
         isSelected: 0
         listIndex: 2
     00000006:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
+        pos: {x: 317, y: 322}
         dragStart: {x: 0, y: 0}
         parent:
-          id: 4
+          id: 7
         children: []
+        name: Leaf 1
+        nodeType: 1
         isDebugging: 0
-        childConnectionPoint: {x: 324, y: 270, z: 0}
-        parentConnectionPoint: {x: 324, y: 240, z: 0}
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 357, y: 352, z: 0}
+        parentConnectionPoint: {x: 357, y: 322, z: 0}
         isSelected: 0
-        listIndex: 4
+        listIndex: 6
     00000007:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
+        pos: {x: 320, y: 214}
         dragStart: {x: 0, y: 0}
         parent:
-          id: 2
-        children: []
+          id: 1
+        children:
+        - id: 6
+        name: Inv 1
+        nodeType: 0
         isDebugging: 0
-        childConnectionPoint: {x: 604, y: 202, z: 0}
-        parentConnectionPoint: {x: 604, y: 172, z: 0}
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 360, y: 244, z: 0}
+        parentConnectionPoint: {x: 360, y: 214, z: 0}
         isSelected: 0
-        listIndex: 6
+        listIndex: 5
     00000008:
       type: {class: Node, ns: , asm: Assembly-CSharp}
       data:
+        pos: {x: 454, y: 214}
         dragStart: {x: 0, y: 0}
         parent:
-          id: 2
+          id: 1
         children: []
+        name: Leaf 2
+        nodeType: 1
         isDebugging: 0
-        childConnectionPoint: {x: 699, y: 202, z: 0}
-        parentConnectionPoint: {x: 699, y: 172, z: 0}
+        isRoot: 0
+        size:
+        - 80
+        - 30
+        childConnectionPoint: {x: 494, y: 244, z: 0}
+        parentConnectionPoint: {x: 494, y: 214, z: 0}
         isSelected: 0
-        listIndex: 7
+        listIndex: 4

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 public class GUIDraggableObject {
-	public Vector2 pos { get; internal set; } = Vector2.zero;
+	public Vector2 pos = Vector2.zero;
 	public Vector2 dragStart = Vector2.zero;
 	public bool isDragging { get; internal set; } = false;
 	private bool isDraggingAll = false;

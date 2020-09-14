@@ -8,6 +8,8 @@ public class NodeConnection {
 	[NonSerialized] private TreeMaker treeMaker = null;
 	private Node childNode = null;
 	private Node parentNode = null;
+	public int childIndex = 0;
+	public int parentIndex = 0;
 	[SerializeReference] private Vector3 childPoint = Vector3.zero;
 	[SerializeReference] private Vector3 parentPoint = Vector3.zero;
 	private bool isDeleting = false;
@@ -90,6 +92,10 @@ public class NodeConnection {
 	public Node GetParent() {
 		return parentNode;
 	}
+
+	public void SetChildIndex(int index) => childIndex = index;
+
+	public void SetParentIndex(int index) => parentIndex = index;
 
 	public void DeleteConnection(bool isPhantom) {
 		isDeleting = true;

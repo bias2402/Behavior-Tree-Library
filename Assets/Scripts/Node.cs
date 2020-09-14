@@ -7,8 +7,8 @@ public class Node : GUIDraggableObject {
 	[Header("Base Node Settings")]
 	[SerializeReference] private Node parent = null;
 	[SerializeReference] private List<Node> children = new List<Node>();
-	[SerializeField] public string name { get; internal set; }
-	private NodeTypes nodeType = NodeTypes.Leaf;
+	public string name = "";
+	[SerializeField] private NodeTypes nodeType = NodeTypes.Leaf;
 	private bool isRunning = false;
 	private int currentChildRunning = 0;
 	private LeafMethod leafMethod = null;
@@ -17,8 +17,8 @@ public class Node : GUIDraggableObject {
 
 	[Header("Tree Maker Settings")]
 	private TreeMaker treeMaker = null;
-	public bool isRoot { get; internal set; } = false;
-	public float[] size { get; internal set; } = new float[2] { 0, 0 };
+	public bool isRoot = false;
+	public float[] size = new float[2] { 0, 0 };
 	public Vector3 childConnectionPoint = Vector3.zero;
 	public Vector3 parentConnectionPoint = Vector3.zero;
 	public bool isSelected = false;
