@@ -607,69 +607,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ced6e1f326751148a4bfe0c270929c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tree: {fileID: 11400000, guid: 46c0815a69c5def4abfde1bcb728b716, type: 2}
+  tree: {fileID: 0}
   debugExecution: 0
   leafMethods:
   - leafName: Leaf 4
     leafMethod:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1686040506}
-          m_MethodName: WalkToB
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   - leafName: Leaf 2
     leafMethod:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1686040506}
-          m_MethodName: WalkToA
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   - leafName: Leaf 2
     leafMethod:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1686040506}
-          m_MethodName: Count
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   - leafName: Leaf 1
     leafMethod:
       m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 1686040506}
-          m_MethodName: WalkToC
-          m_Mode: 1
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
+        m_Calls: []
   pointA: {fileID: 1612814207}
   pointB: {fileID: 84312071}
   pointC: {fileID: 812123918}
